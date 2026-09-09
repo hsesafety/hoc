@@ -1,0 +1,2318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STOP Card System</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ===== SAME CSS AS BEFORE – KEPT COMPACT ===== */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',sans-serif; background:#f0f4f8; color:#1a2332; }
+    .container { max-width:1000px; margin:0 auto; padding:16px; }
+    .app-header { background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff; padding:16px 0; box-shadow:0 4px 12px rgba(0,0,0,.15); position:sticky; top:0; z-index:100; }
+    .app-header .container { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+    .app-header .logo { display:flex; align-items:center; gap:10px; font-size:20px; font-weight:700; }
+    .app-header .logo i { font-size:28px; }
+    .app-header .header-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .app-header .header-actions select, .app-header .header-actions button { padding:6px 14px; border-radius:20px; border:none; background:rgba(255,255,255,.18); color:#fff; font-size:14px; cursor:pointer; transition:background .2s; }
+    .app-header .header-actions select:hover, .app-header .header-actions button:hover { background:rgba(255,255,255,.30); }
+    .app-header .header-actions select option { color:#1a2332; }
+    .app-header .user-badge { background:rgba(255,255,255,.20); padding:4px 14px; border-radius:20px; font-size:13px; }
+    .tabs { display:flex; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); margin:20px 0; flex-wrap:wrap; }
+    .tabs .tab { flex:1; min-width:80px; padding:14px 16px; text-align:center; font-weight:600; font-size:14px; color:#5f6b7a; cursor:pointer; transition:all .25s; border-bottom:3px solid transparent; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .tabs .tab:hover { background:#f5f8fa; color:#1a73e8; }
+    .tabs .tab.active { color:#1a73e8; border-bottom-color:#1a73e8; background:#f0f7ff; }
+    .panel { display:none; animation:fadeIn .3s ease; }
+    .panel.active { display:block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .card { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.06); padding:24px; margin-bottom:20px; }
+    .card-title { font-size:18px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:10px; color:#1a2332; }
+    .card-title i { color:#1a73e8; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+    .form-row.three { grid-template-columns:1fr 1fr 1fr; }
+    .form-row.full { grid-template-columns:1fr; }
+    .form-group { display:flex; flex-direction:column; gap:4px; }
+    .form-group label { font-weight:600; font-size:13px; color:#3d4a5a; }
+    .form-group label .required { color:#d32f2f; }
+    .form-group input,.form-group select,.form-group textarea { padding:10px 14px; border:1.5px solid #dde2e8; border-radius:10px; font-size:14px; font-family:inherit; transition:border .2s,box-shadow .2s; background:#fafbfc; width:100%; }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline:none; border-color:#1a73e8; box-shadow:0 0 0 3px rgba(26,115,232,.15); background:#fff; }
+    .form-group textarea { resize:vertical; min-height:80px; }
+    .upload-area { border:2px dashed #dde2e8; border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all .25s; background:#fafbfc; }
+    .upload-area:hover { border-color:#1a73e8; background:#f0f7ff; }
+    .upload-area.dragover { border-color:#1a73e8; background:#e8f0fe; }
+    .upload-area i { font-size:40px; color:#8896a8; margin-bottom:8px; }
+    .upload-area .preview-img { max-width:100%; max-height:200px; border-radius:8px; margin-top:12px; }
+    .upload-area .file-name { font-weight:600; color:#1a73e8; margin-top:8px; }
+    .upload-area .remove-btn { margin-top:8px; background:#fee8e8; color:#d32f2f; border:none; padding:4px 16px; border-radius:20px; cursor:pointer; font-size:13px; }
+    .btn { padding:10px 24px; border:none; border-radius:10px; font-weight:600; font-size:14px; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:8px; }
+    .btn-primary { background:#1a73e8; color:#fff; }
+    .btn-primary:hover { background:#1557b0; transform:translateY(-1px); box-shadow:0 4px 12px rgba(26,115,232,.30); }
+    .btn-primary:disabled { opacity:0.6; cursor:not-allowed; }
+    .btn-success { background:#0f9d58; color:#fff; }
+    .btn-success:hover { background:#0b7a44; }
+    .btn-danger { background:#d32f2f; color:#fff; }
+    .btn-danger:hover { background:#b71c1c; }
+    .btn-warning { background:#e37400; color:#fff; }
+    .btn-warning:hover { background:#c46200; }
+    .btn-outline { background:transparent; color:#1a73e8; border:1.5px solid #1a73e8; }
+    .btn-outline:hover { background:#e8f0fe; }
+    .btn-sm { padding:6px 14px; font-size:12px; border-radius:8px; }
+    .btn-block { width:100%; justify-content:center; }
+    .badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+    .badge-green { background:#e6f4ea; color:#0f9d58; }
+    .badge-red { background:#fce8e8; color:#d32f2f; }
+    .badge-orange { background:#fef3e0; color:#e37400; }
+    .badge-blue { background:#e8f0fe; color:#1a73e8; }
+    .badge-purple { background:#f3e8ff; color:#7c3aed; }
+    .badge-warning { background:#fef3e0; color:#e37400; }
+    .badge-approval-approved { background:#e6f4ea; color:#0f9d58; }
+    .badge-approval-unapproved { background:#fce8e8; color:#d32f2f; }
+    .badge-approval-pending { background:#fef3e0; color:#e37400; }
+    .badge-auth-worker { background:#e8f0fe; color:#1a73e8; }
+    .badge-auth-guest { background:#f5f5f5; color:#666; }
+    .stop-card-item { border:1px solid #e8ecf0; border-radius:12px; padding:16px 18px; margin-bottom:12px; transition:all .2s; background:#fafbfc; }
+    .stop-card-item:hover { border-color:#c5cdd8; background:#fff; }
+    .stop-card-item .top-row { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+    .stop-card-item .top-row .obs-text { font-weight:600; font-size:15px; flex:1; min-width:120px; }
+    .stop-card-item .meta { display:flex; flex-wrap:wrap; gap:12px 20px; margin-top:8px; font-size:13px; color:#5f6b7a; }
+    .stop-card-item .meta i { width:16px; margin-right:4px; color:#8896a8; }
+    .stop-card-item .actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .stop-card-item .image-thumb { width:60px; height:60px; border-radius:8px; object-fit:cover; background:#e8ecf0; border:1px solid #dde2e8; cursor:pointer; }
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; margin-bottom:24px; }
+    .stat-box { background:#fff; padding:16px; border-radius:12px; text-align:center; border:1px solid #e8ecf0; }
+    .stat-box .number { font-size:28px; font-weight:700; color:#1a73e8; }
+    .stat-box .label { font-size:13px; color:#5f6b7a; margin-top:4px; }
+    .chart-container { position:relative; height:250px; margin-top:12px; }
+    .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    @media (max-width:700px) { .chart-grid { grid-template-columns:1fr; } .form-row { grid-template-columns:1fr; } .form-row.three { grid-template-columns:1fr; } .app-header .logo { font-size:16px; } .tabs .tab { font-size:12px; padding:10px 8px; min-width:60px; } .tabs .tab span { display:none; } .card { padding:16px; } .stats-grid { grid-template-columns:1fr 1fr; } }
+    .spinner { display:inline-block; width:20px; height:20px; border:3px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .loading-overlay { text-align:center; padding:40px 0; color:#8896a8; }
+    .loading-overlay i { font-size:40px; margin-bottom:12px; }
+    .toast-container { position:fixed; bottom:24px; right:24px; z-index:999; display:flex; flex-direction:column; gap:8px; max-width:380px; width:100%; }
+    .toast { padding:14px 20px; border-radius:12px; color:#fff; font-weight:500; box-shadow:0 6px 24px rgba(0,0,0,.15); animation:slideUp .3s ease; display:flex; align-items:center; gap:10px; }
+    .toast-success { background:#0f9d58; }
+    .toast-error { background:#d32f2f; }
+    .toast-info { background:#1a73e8; }
+    .toast i { font-size:20px; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .text-center { text-align:center; }
+    .text-muted { color:#8896a8; }
+    .text-sm { font-size:13px; }
+    .hidden { display:none; }
+    .w-full { width:100%; }
+    .mt-16 { margin-top:16px; }
+    .mb-16 { margin-bottom:16px; }
+    .check-section { border:1px solid #e0e7ef; border-radius:8px; padding:12px; margin-bottom:12px; }
+    .check-section .section-title { font-weight:600; font-size:14px; margin-bottom:8px; display:flex; justify-content:space-between; }
+    .check-item { display:flex; align-items:center; gap:12px; padding:4px 0; }
+    .check-item label { flex:1; font-size:13px; }
+    .check-item input[type="checkbox"] { width:18px; height:18px; accent-color:#1a73e8; }
+    .modal { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
+    .modal.active { display:flex; }
+    .modal-content { background:#fff; padding:32px; border-radius:16px; max-width:500px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.2); position:relative; max-height:90vh; overflow-y:auto; }
+    .modal-content .close-btn { position:absolute; top:12px; right:16px; font-size:24px; cursor:pointer; color:#999; transition:color .2s; }
+    .modal-content .close-btn:hover { color:#333; }
+    .modal-content h2 { margin-bottom:16px; }
+    .modal-content .form-group { margin-bottom:12px; }
+    .modal-content .btn-block { margin-top:12px; }
+    .upload-area-small { border:2px dashed #dde2e8; border-radius:8px; padding:12px; text-align:center; cursor:pointer; transition:all .2s; background:#fafbfc; }
+    .upload-area-small:hover { border-color:#1a73e8; background:#f0f7ff; }
+    .upload-area-small .preview-img { max-width:100%; max-height:120px; border-radius:6px; margin-top:6px; }
+    .upload-area-small .file-name { font-weight:600; color:#1a73e8; font-size:12px; }
+    .upload-area-small .remove-btn { margin-top:4px; background:#fee8e8; color:#d32f2f; border:none; padding:2px 12px; border-radius:12px; cursor:pointer; font-size:11px; }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="container">
+    <div class="logo">
+      <i class="fas fa-clipboard-check"></i>
+      <span id="appTitle">STOP Card System</span>
+    </div>
+    <div class="header-actions">
+      <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> <span data-i18n="guest">Guest</span></span>
+      <select id="langSelect"><option value="en">English</option><option value="ar">العربية</option></select>
+      <button id="workerLoginBtn" style="display:none;" onclick="showWorkerLogin()"><i class="fas fa-user-cog"></i> <span data-i18n="workerLogin">Worker Login</span></button>
+      <button id="loginBtn" onclick="showCompanyLogin()"><i class="fas fa-sign-in-alt"></i> <span data-i18n="login">Login</span></button>
+      <button id="syncBtn" style="display:none;" onclick="syncPendingCards()" class="btn btn-sm btn-success"><i class="fas fa-cloud-upload-alt"></i> <span data-i18n="syncPending">Sync</span></button>
+    <button id="qrBtn" style="display:none;" onclick="generateQRCode()" class="btn btn-sm btn-primary">
+  <i class="fas fa-qrcode"></i> <span data-i18n="generateQR">Generate QR</span>
+</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Modals -->
+  <div class="modal" id="companyLoginModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('companyLoginModal')">&times;</span>
+      <h2 data-i18n="companyLogin">Company Login</h2>
+      <div class="form-group"><label data-i18n="companyId">Company ID</label><input type="text" id="companyIdInput" placeholder="Enter company ID"></div>
+      <div class="form-group"><label data-i18n="password">Password</label><input type="password" id="companyPasswordInput" placeholder="Enter password"></div>
+      <button class="btn btn-primary btn-block" onclick="companyLogin()"><i class="fas fa-sign-in-alt"></i> <span data-i18n="login">Login</span></button>
+      <p id="loginError" style="color:red; margin-top:8px; display:none;"></p>
+    </div>
+  </div>
+
+  <div class="modal" id="workerLoginModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('workerLoginModal')">&times;</span>
+      <h2 data-i18n="workerLogin">Worker Login</h2>
+      <div class="form-group"><label data-i18n="workerId">Worker ID</label><input type="text" id="workerIdInput" placeholder="Enter worker ID"></div>
+      <div class="form-group"><label data-i18n="password">Password</label><input type="password" id="workerPasswordInput" placeholder="Enter password"></div>
+      <button class="btn btn-primary btn-block" onclick="workerLogin()"><i class="fas fa-sign-in-alt"></i> <span data-i18n="login">Login</span></button>
+      <p id="workerLoginError" style="color:red; margin-top:8px; display:none;"></p>
+    </div>
+  </div>
+
+  <!-- Full Edit Modal (HSEQ) for Cloud Cards -->
+  <div class="modal" id="fullEditModalCloud">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('fullEditModalCloud')">&times;</span>
+      <h2 data-i18n="editObservation">Edit Observation (Full)</h2>
+      <div class="form-group"><label data-i18n="reporterName">Reporter Name</label><input type="text" id="editReporterCloud"></div>
+      <div class="form-group"><label data-i18n="reporterId">Reporter ID</label><input type="text" id="editReporterIdCloud"></div>
+      <div class="form-group"><label data-i18n="jobTitle">Job Title</label><input type="text" id="editJobCloud"></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="area">Area</label><input type="text" id="editAreaCloud"></div>
+        <div class="form-group"><label data-i18n="location">Location</label><input type="text" id="editLocationCloud"></div>
+      </div>
+      <div class="form-group"><label data-i18n="observation">Observation</label><textarea id="editObservationCloud" rows="3"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="observationType">Observation Type</label><select id="editObsTypeCloud"><option value="unsafe_condition">Unsafe Condition</option><option value="unsafe_act">Unsafe Act</option><option value="near_miss">Near Miss</option><option value="positive">Positive Observation</option></select></div>
+        <div class="form-group"><label data-i18n="status">Status</label><select id="editStatusCloud"><option value="Pending">Pending</option><option value="Completed">Completed</option><option value="In Progress">In Progress</option></select></div>
+      </div>
+      <div class="form-group"><label data-i18n="recommendation">Recommendation</label><textarea id="editRecommendationCloud" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="targetDate">Target Date</label><input type="date" id="editTargetDateCloud"></div>
+        <div class="form-group"><label data-i18n="responsibleDepartment">Responsible Department</label><select id="editRespDeptCloud"><option value="">Select</option><option value="HSEQ">HSEQ</option><option value="Operation">Operation</option><option value="Maintenance">Maintenance</option><option value="Administration">Administration</option><option value="Other">Other</option></select></div>
+      </div>
+      <div class="form-group"><label data-i18n="approval">Approval</label><select id="editApprovalCloud"><option value="pending">Pending</option><option value="approved">Approved</option><option value="unapproved">Unapproved</option></select></div>
+      <button class="btn btn-primary btn-block" onclick="saveFullEditCloud()"><i class="fas fa-save"></i> <span data-i18n="save">Save</span></button>
+      <p id="fullEditErrorCloud" style="color:red; margin-top:8px; display:none;"></p>
+    </div>
+  </div>
+
+  <!-- Full Edit Modal for My Cards -->
+  <div class="modal" id="fullEditModalMy">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('fullEditModalMy')">&times;</span>
+      <h2 data-i18n="editObservation">Edit Observation (Full)</h2>
+      <div class="form-group"><label data-i18n="reporterName">Reporter Name</label><input type="text" id="editReporterMy"></div>
+      <div class="form-group"><label data-i18n="reporterId">Reporter ID</label><input type="text" id="editReporterIdMy"></div>
+      <div class="form-group"><label data-i18n="jobTitle">Job Title</label><input type="text" id="editJobMy"></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="area">Area</label><input type="text" id="editAreaMy"></div>
+        <div class="form-group"><label data-i18n="location">Location</label><input type="text" id="editLocationMy"></div>
+      </div>
+      <div class="form-group"><label data-i18n="observation">Observation</label><textarea id="editObservationMy" rows="3"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="observationType">Observation Type</label><select id="editObsTypeMy"><option value="unsafe_condition">Unsafe Condition</option><option value="unsafe_act">Unsafe Act</option><option value="near_miss">Near Miss</option><option value="positive">Positive Observation</option></select></div>
+        <div class="form-group"><label data-i18n="status">Status</label><select id="editStatusMy"><option value="Pending">Pending</option><option value="Completed">Completed</option><option value="In Progress">In Progress</option></select></div>
+      </div>
+      <div class="form-group"><label data-i18n="recommendation">Recommendation</label><textarea id="editRecommendationMy" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="targetDate">Target Date</label><input type="date" id="editTargetDateMy"></div>
+        <div class="form-group"><label data-i18n="responsibleDepartment">Responsible Department</label><select id="editRespDeptMy"><option value="">Select</option><option value="HSEQ">HSEQ</option><option value="Operation">Operation</option><option value="Maintenance">Maintenance</option><option value="Administration">Administration</option><option value="Other">Other</option></select></div>
+      </div>
+      <div class="form-group"><label data-i18n="approval">Approval</label><select id="editApprovalMy"><option value="pending">Pending</option><option value="approved">Approved</option><option value="unapproved">Unapproved</option></select></div>
+      <button class="btn btn-primary btn-block" onclick="saveFullEditMy()"><i class="fas fa-save"></i> <span data-i18n="save">Save</span></button>
+      <p id="fullEditErrorMy" style="color:red; margin-top:8px; display:none;"></p>
+    </div>
+  </div>
+
+  <!-- Local Edit Modal (for local cards) -->
+  <div class="modal" id="localEditModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('localEditModal')">&times;</span>
+      <h2 data-i18n="editLocalCard">Edit Local Card</h2>
+      <div class="form-group"><label data-i18n="reporterName">Reporter Name</label><input type="text" id="localEditReporter"></div>
+      <div class="form-group"><label data-i18n="reporterId">Reporter ID</label><input type="text" id="localEditReporterId"></div>
+      <div class="form-group"><label data-i18n="jobTitle">Job Title</label><input type="text" id="localEditJob"></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="area">Area</label><input type="text" id="localEditArea"></div>
+        <div class="form-group"><label data-i18n="location">Location</label><input type="text" id="localEditLocation"></div>
+      </div>
+      <div class="form-group"><label data-i18n="observation">Observation</label><textarea id="localEditObservation" rows="3"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="observationType">Observation Type</label><select id="localEditObsType"><option value="unsafe_condition">Unsafe Condition</option><option value="unsafe_act">Unsafe Act</option><option value="near_miss">Near Miss</option><option value="positive">Positive Observation</option></select></div>
+        <div class="form-group"><label data-i18n="status">Status</label><select id="localEditStatus"><option value="Pending">Pending</option><option value="Completed">Completed</option><option value="In Progress">In Progress</option></select></div>
+      </div>
+      <div class="form-group"><label data-i18n="recommendation">Recommendation</label><textarea id="localEditRecommendation" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label data-i18n="targetDate">Target Date</label><input type="date" id="localEditTargetDate"></div>
+        <div class="form-group"><label data-i18n="responsibleDepartment">Responsible Department</label><select id="localEditRespDept"><option value="">Select</option><option value="HSEQ">HSEQ</option><option value="Operation">Operation</option><option value="Maintenance">Maintenance</option><option value="Administration">Administration</option><option value="Other">Other</option></select></div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="saveLocalEdit()"><i class="fas fa-save"></i> <span data-i18n="save">Save</span></button>
+      <p id="localEditError" style="color:red; margin-top:8px; display:none;"></p>
+    </div>
+  </div>
+
+  <!-- Corrective Action Modal -->
+  <div class="modal" id="caModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('caModal')">&times;</span>
+      <h2 data-i18n="addCorrectiveAction">Add Corrective Action</h2>
+      <div class="form-group">
+        <label data-i18n="photo">Photo / Evidence <span class="required">*</span></label>
+        <div class="upload-area-small" id="caUploadArea" onclick="document.getElementById('caFileInput').click()">
+          <i class="fas fa-cloud-upload-alt" style="font-size:28px;color:#8896a8;"></i>
+          <p style="font-size:12px;color:#5f6b7a;" data-i18n="clickToUpload">Click to upload image</p>
+          <div id="caUploadPreview"></div>
+          <input type="file" id="caFileInput" accept="image/*" style="display:none" onchange="handleCAFileSelect(event)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="description">Description</label>
+        <input type="text" id="caDescription" placeholder="Action taken...">
+      </div>
+      <div class="form-group">
+        <label data-i18n="by">By</label>
+        <input type="text" id="caBy" readonly style="background:#f0f0f0;">
+      </div>
+      <div class="form-group">
+        <label data-i18n="date">Date</label>
+        <input type="text" id="caDate" readonly style="background:#f0f0f0;">
+      </div>
+      <button class="btn btn-success btn-block" id="caSaveBtn" onclick="saveCorrectiveAction()"><i class="fas fa-save"></i> <span data-i18n="save">Save</span></button>
+      <p id="caError" style="color:red; margin-top:8px; display:none;"></p>
+    </div>
+  </div>
+<!-- QR Code Modal -->
+<div class="modal" id="qrModal">
+  <div class="modal-content" style="max-width:400px;">
+    <span class="close-btn" onclick="closeModal('qrModal')">&times;</span>
+    <h2 data-i18n="qrLogin">QR Code Login</h2>
+    <p style="font-size:13px;color:#5f6b7a;margin-bottom:12px;" data-i18n="qrInstructions">
+      Scan this QR code with any device to automatically log in as this company.
+      <br><small>The token is permanent until you regenerate it.</small>
+    </p>
+    <div id="qrCodeContainer" style="text-align:center;padding:10px;"></div>
+    <p id="qrUrlDisplay" style="font-size:10px;color:#8896a8;word-break:break-all;margin-top:8px;"></p>
+    <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="downloadQR()" style="flex:1;"><i class="fas fa-download"></i> Download QR</button>
+      <button class="btn btn-warning" onclick="regenerateQR()" style="flex:1;"><i class="fas fa-sync-alt"></i> Regenerate Token</button>
+    </div>
+  </div>
+</div>
+  <!-- Tabs -->
+  <div class="tabs" id="tabContainer">
+    <div class="tab active" data-tab="new" onclick="switchTab('new')"><i class="fas fa-plus-circle"></i> <span data-i18n="newCard">New Card</span></div>
+    <div class="tab" data-tab="mycards" onclick="switchTab('mycards')"><i class="fas fa-list"></i> <span data-i18n="myCards">My Cards</span></div>
+    <div class="tab" data-tab="charts" onclick="switchTab('charts')"><i class="fas fa-chart-pie"></i> <span data-i18n="charts">Charts</span></div>
+    <div class="tab" data-tab="cloud" onclick="switchTab('cloud')"><i class="fas fa-cloud"></i> <span data-i18n="allCards">All Cards</span></div>
+  </div>
+
+  <!-- NEW CARD PANEL -->
+  <div class="panel active" id="panel-new">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-pen-fancy"></i> <span data-i18n="newCard">New STOP Card</span></div>
+      <form id="stopCardForm" onsubmit="return submitStopCard(event)">
+        <div class="form-row">
+          <div class="form-group"><label data-i18n="reporterName">Reporter Name </label><input type="text" id="reporterName" required></div>
+          <div class="form-group"><label data-i18n="reporterId">Reporter ID</label><input type="text" id="reporterId" list="workerSuggestions"><datalist id="workerSuggestions"></datalist></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label data-i18n="jobTitle">Job Title</label><input type="text" id="jobTitle"></div>
+<div class="form-group">
+  <label data-i18n="department">Department </label>
+  <input type="text" id="department" placeholder="Enter department" >
+</div>
+        </div>
+<div class="form-row">
+  <div class="form-group">
+    <label data-i18n="area">Area</label>
+    <input type="text" id="area" list="areaList" placeholder="Type or select area">
+    <datalist id="areaList"></datalist>
+  </div>
+  <div class="form-group">
+    <label data-i18n="location">Site / Location</label>
+    <input type="text" id="location" list="locationList" placeholder="Type or select site">
+    <datalist id="locationList"></datalist>
+  </div>
+</div>
+
+
+<div class="form-group mb-16" style="position:relative;">
+  <label data-i18n="observation">Observation </label>
+  <div style="display:flex; gap:8px; align-items:stretch;">
+    <textarea id="observation" rows="4"  style="flex:1;"></textarea>
+    <button type="button" id="voiceBtn" class="btn btn-outline" style="padding:0 16px; border-radius:10px;" onclick="toggleVoiceRecognition()">
+      <i class="fas fa-microphone"></i>
+    </button>
+  </div>
+</div>
+        <div class="form-row">
+          <div class="form-group"><label data-i18n="observationType">Observation Type </label><select id="obsType" ><option value="unsafe_condition">Unsafe Condition</option><option value="unsafe_act">Unsafe Act</option><option value="near_miss">Near Miss</option><option value="positive">Positive Observation</option></select></div>
+          <div class="form-group"><label data-i18n="status">Status </label><select id="status" ><option value="Pending">Pending</option><option value="Completed">Completed</option><option value="In Progress">In Progress</option></select></div>
+        </div>
+        <div class="form-group mb-16"><label data-i18n="photo">Photo / Evidence</label>
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-cloud-upload-alt"></i><p data-i18n="clickOrDrag">Click or drag & drop an image</p><p class="text-sm text-muted">JPG, PNG up to 5MB</p>
+            <div id="uploadPreview"></div><input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+          </div>
+        </div>
+        <div class="form-group mb-16"><label data-i18n="recommendation">Recommendation (optional)</label><textarea id="recommendation" rows="3"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label data-i18n="targetDate">Target Date (optional)</label><input type="date" id="targetDate"></div>
+          <div class="form-group"><label data-i18n="responsibleDepartment">Responsible Department (optional)</label><select id="respDept"><option value="HSEQ">HSEQ</option><option value="Operation">Operation</option><option value="Maintenance">Maintenance</option><option value="Administration">Administration</option><option value="Other">Other</option></select></div>
+        </div>
+        <div class="card" style="margin-top:20px; border:1px solid #dde2e8; background:#f8faff;">
+          <div class="card-title" style="font-size:16px;"><i class="fas fa-check-double"></i> <span data-i18n="safetyChecks">Safety Checks</span></div>
+          <div class="form-group"><label data-i18n="safetyMode">Safety Check Mode</label><select id="safetyMode" onchange="toggleSafetyChecks()"><option value="hse">HSE (Life Saving Rules + General Hazards)</option><option value="bbs">BBS (Behaviour Based Safety)</option></select></div>
+          <div id="safetyChecksContainer"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="submitBtn"><i class="fas fa-save"></i> <span data-i18n="submit">Submit STOP Card</span></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MY CARDS PANEL -->
+  <div class="panel" id="panel-mycards">
+    <div class="card"><div class="card-title"><i class="fas fa-list-ul"></i> <span data-i18n="myCards">My STOP Cards</span></div>
+      <div id="myCardsContainer"><div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i><br><span data-i18n="loading">Loading...</span></div></div>
+    </div>
+  </div>
+
+  <!-- CHARTS PANEL -->
+  <div class="panel" id="panel-charts">
+    <div class="card"><div class="card-title"><i class="fas fa-chart-pie"></i> <span data-i18n="charts">Statistics &amp; Charts</span></div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-box"><div class="number" id="statTotal">0</div><div class="label" data-i18n="totalCards">Total Cards</div></div>
+        <div class="stat-box"><div class="number" id="statPending">0</div><div class="label" data-i18n="pending">Pending</div></div>
+        <div class="stat-box"><div class="number" id="statCompleted">0</div><div class="label" data-i18n="completed">Completed</div></div>
+        <div class="stat-box"><div class="number" id="statUnsafe">0</div><div class="label" data-i18n="unsafeConditions">Unsafe Conditions</div></div>
+      </div>
+      <div class="chart-grid">
+        <div><h4 data-i18n="byObservationType">By Observation Type</h4><div class="chart-container"><canvas id="chartType"></canvas></div></div>
+        <div><h4 data-i18n="byStatus">By Status</h4><div class="chart-container"><canvas id="chartStatus"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALL CARDS (CLOUD) PANEL -->
+  <div class="panel" id="panel-cloud">
+<div class="card-title">
+  <i class="fas fa-cloud"></i> <span data-i18n="allCards">All Cards</span>
+  <span style="margin-left:auto; font-size:13px; font-weight:400; color:#8896a8;" id="cloudCount"></span>
+  <button id="exportBtn" class="btn btn-sm btn-success" style="display:none; margin-left:10px;" onclick="exportToExcel('cloud')">
+    <i class="fas fa-file-excel"></i> Export Excel
+  </button>
+</div>
+      <div id="cloudContainer"><div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i><br><span data-i18n="loading">Loading...</span></div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ================================================================
+// CONFIG & GLOBAL STATE
+// ================================================================
+const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSqiDNkLovLmEYBkYTteSeHPk8jAiG69wUuyonc1_D7bs48yyb59xZQnJ6yVPcOagI/exec'; // <-- REPLACE
+
+let currentLang = 'en';
+let currentUser = { name: 'Guest', id: '', loggedIn: false, role: 'worker', companyId: '', companyName: '', department: '' };
+let companyConfig = { folderId: '', observationsSheetId: '', workersSheetId: '', code: '', logo: '', pdfTitle: 'STOP Card System' };
+let myCards = [], cloudCards = [];
+let pendingCards = JSON.parse(localStorage.getItem('pendingCards') || '[]');
+let chartInstances = { type: null, status: null };
+let selectedFileBase64 = null;
+let safetyChecksData = {};
+let workersList = [];
+let editingRowIndex = null; // for full edit (HSEQ) – 0‑based sheet row index
+let editingCard = null;
+let caFileBase64 = null;
+let localEditIndex = null;
+
+// ================================================================
+// DOM HELPERS
+// ================================================================
+const $ = id => document.getElementById(id);
+const qs = (sel, ctx=document) => ctx.querySelector(sel);
+const qsa = (sel, ctx=document) => [...ctx.querySelectorAll(sel)];
+
+// ================================================================
+// LOCALIZATION
+// ================================================================
+const LANG = {
+  en: {
+    companyLogin:'Company Login', workerLogin:'Worker Login',
+    newCard:'New Card', myCards:'My Cards', charts:'Charts', allCards:'All Cards',
+    reporterName:'Reporter Name', reporterId:'Reporter ID', jobTitle:'Job Title',
+    department:'Department', area:'Area', location:'Location',
+    observation:'Observation', observationType:'Observation Type', status:'Status',
+    photo:'Photo / Evidence', recommendation:'Recommendation',
+    targetDate:'Target Date', responsibleDepartment:'Responsible Department',
+    submit:'Submit STOP Card', pending:'Pending', completed:'Completed', inProgress:'In Progress',
+    unsafeCondition:'Unsafe Condition', unsafeAct:'Unsafe Act', nearMiss:'Near Miss',
+    positive:'Positive Observation', noCards:'No cards found.', loading:'Loading...',
+    login:'Login', logout:'Logout', guest:'Guest',
+    loginRequired:'Please login to access cloud data.',
+    safetyChecks:'Safety Checks', safetyMode:'Safety Check Mode',
+    hseMode:'HSE (Life Saving Rules + General Hazards)',
+    bbsMode:'BBS (Behaviour Based Safety)',
+    lifeSavingRules:'Life Saving Rules', generalHazards:'General Hazards',
+    ppe:'PPE', reactionOfPeople:'Reaction of People', position:'Position',
+    toolsEquipment:'Tools & Equipment', procedures:'Procedures', housekeeping:'Housekeeping',
+    safe:'Safe', unsafe:'Unsafe',
+    downloadPDF:'Download PDF', viewImage:'View Image',
+    edit:'Edit', addCorrectiveAction:'Add Corrective Action',
+    correctiveActionAdded:'Corrective Action Added',
+    signature:'Signature', by:'By', date:'Date', description:'Description',
+    save:'Save', editObservation:'Edit Observation', approval:'Approval',
+    approve:'Approve', unapprove:'Unapprove',
+    totalCards:'Total Cards', unsafeConditions:'Unsafe Conditions',
+    byObservationType:'By Observation Type', byStatus:'By Status',
+    companyId:'Company ID', password:'Password', workerId:'Worker ID',
+    clickOrDrag:'Click or drag & drop an image', clickToUpload:'Click to upload image',
+    syncPending:'Sync Pending', pendingCards:'Pending Cards',
+    noPending:'No pending cards to sync', syncSuccess:'Cards synced successfully',
+    workerRequired:'Worker login required for this action',
+    notAuthorized:'You are not authorized for this action',
+    departmentMismatch:'Your department does not match the responsible department',
+    hseqOnly:'Only HSEQ users can perform this action',
+    editLocalCard:'Edit Local Card', uploaded:'Uploaded', local:'Local',
+    authType:'Auth Type'
+  },
+  ar: {
+    companyLogin:'تسجيل دخول الشركة', workerLogin:'تسجيل دخول العامل',
+    newCard:'بطاقة جديدة', myCards:'بطاقاتي', charts:'الرسوم البيانية', allCards:'جميع البطاقات',
+    reporterName:'اسم المبلغ', reporterId:'الرقم الوظيفي', jobTitle:'الوظيفة',
+    department:'القسم', area:'المنطقة', location:'الموقع',
+    observation:'الملاحظة', observationType:'نوع الملاحظة', status:'الحالة',
+    photo:'صورة / دليل', recommendation:'توصية',
+    targetDate:'التاريخ المستهدف', responsibleDepartment:'القسم المسؤول',
+    submit:'إرسال بطاقة الإيقاف', pending:'قيد الانتظار', completed:'مكتمل', inProgress:'قيد التنفيذ',
+    unsafeCondition:'حالة غير آمنة', unsafeAct:'سلوك غير آمن', nearMiss:'حادث وشيك',
+    positive:'ملاحظة إيجابية', noCards:'لا توجد بطاقات.', loading:'جاري التحميل...',
+    login:'تسجيل الدخول', logout:'تسجيل الخروج', guest:'زائر',
+    loginRequired:'يرجى تسجيل الدخول للوصول إلى بيانات السحابة.',
+    safetyChecks:'فحوصات السلامة', safetyMode:'وضع فحص السلامة',
+    hseMode:'HSE (قواعد السلامة + المخاطر العامة)',
+    bbsMode:'BBS (السلامة القائمة على السلوك)',
+    lifeSavingRules:'قواعد إنقاذ الحياة', generalHazards:'المخاطر العامة',
+    ppe:'معدات الوقاية الشخصية', reactionOfPeople:'رد فعل الأشخاص', position:'الوضعية',
+    toolsEquipment:'الأدوات والمعدات', procedures:'الإجراءات', housekeeping:'النظافة والترتيب',
+    safe:'آمن', unsafe:'غير آمن',
+    downloadPDF:'تحميل PDF', viewImage:'عرض الصورة',
+    edit:'تعديل', addCorrectiveAction:'إضافة إجراء تصحيحي',
+    correctiveActionAdded:'تم إضافة إجراء تصحيحي',
+    signature:'التوقيع', by:'بواسطة', date:'التاريخ', description:'الوصف',
+    save:'حفظ', editObservation:'تعديل الملاحظة', approval:'الموافقة',
+    approve:'موافقة', unapprove:'رفع الموافقة',
+    totalCards:'إجمالي البطاقات', unsafeConditions:'حالات غير آمنة',
+    byObservationType:'حسب نوع الملاحظة', byStatus:'حسب الحالة',
+    companyId:'معرف الشركة', password:'كلمة المرور', workerId:'رقم العامل',
+    clickOrDrag:'انقر أو اسحب الصورة', clickToUpload:'انقر لرفع الصورة',
+    syncPending:'مزامنة المعلقة', pendingCards:'بطاقات معلقة',
+    noPending:'لا توجد بطاقات معلقة', syncSuccess:'تمت المزامنة بنجاح',
+    workerRequired:'تسجيل دخول العامل مطلوب لهذا الإجراء',
+    notAuthorized:'غير مصرح لك بهذا الإجراء',
+    departmentMismatch:'قسمك لا يتطابق مع القسم المسؤول',
+    hseqOnly:'فقط مستخدمي HSEQ يمكنهم القيام بهذا الإجراء',
+    editLocalCard:'تعديل البطاقة المحلية', uploaded:'مرفوعة', local:'محلية',
+    authType:'نوع المصادقة'
+  }
+};
+function t(key) { return LANG[currentLang]?.[key] || key; }
+
+// ================================================================
+// UPDATE LOCALIZATION
+// ================================================================
+function updateLocalization() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+      // skip inputs – they have placeholders or values
+    } else {
+      el.textContent = t(key);
+    }
+  });
+  // Update placeholders
+  const placeholders = {
+    'reporterName': 'reporterName',
+    'reporterId': 'reporterId',
+    'jobTitle': 'jobTitle',
+    'area': 'area',
+    'location': 'location',
+    'observation': 'observation',
+    'recommendation': 'recommendation',
+    'companyIdInput': 'companyId',
+    'companyPasswordInput': 'password',
+    'workerIdInput': 'workerId',
+    'workerPasswordInput': 'password',
+    'caDescription': 'description',
+  };
+  for (const [id, key] of Object.entries(placeholders)) {
+    const el = $(id);
+    if (el) el.placeholder = t(key);
+  }
+}
+$('langSelect').addEventListener('change', function() {
+  currentLang = this.value;
+  updateLocalization();
+  renderSafetyChecks($('safetyMode').value);
+  loadMyCards();
+  loadCharts();
+  if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+  showToast('Language changed','info');
+});
+
+// ================================================================
+// TOAST & API
+// ================================================================
+function showToast(msg, type='info', dur=4000) {
+  const c = $('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  const icon = type==='success' ? 'fa-check-circle' : type==='error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+  t.innerHTML = `<i class="fas ${icon}"></i> ${msg}`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(10px)'; t.style.transition='all .3s'; setTimeout(()=>t.remove(),300); }, dur);
+}
+
+async function apiCall(action, payload = {}) {
+  try {
+    const fd = new FormData();
+    fd.append('action', action);
+    for (const [k, v] of Object.entries(payload)) {
+      if (v instanceof File) fd.append(k, v, v.name);
+      else if (typeof v === 'object' && v !== null) fd.append(k, JSON.stringify(v));
+      else fd.append(k, String(v));
+    }
+    const resp = await fetch(APP_SCRIPT_URL, { method: 'POST', body: fd });
+    const text = await resp.text();
+    try { return JSON.parse(text); } catch(e) { return { success: false, error: 'Invalid response: ' + text }; }
+  } catch(err) { return { success: false, error: err.message }; }
+}
+
+// ================================================================
+// CLOSE MODAL
+// ================================================================
+function closeModal(id) { $(id).classList.remove('active'); }
+// ================================================================
+// Excel
+// ================================================================
+function exportToExcel() {
+  if (!cloudCards || cloudCards.length === 0) {
+    showToast('No data to export', 'error');
+    return;
+  }
+  if (currentUser.role !== 'hseq') {
+    showToast('Only HSEQ users can export', 'error');
+    return;
+  }
+
+  // Get all headers from the first card
+  const headers = Object.keys(cloudCards[0]);
+  let tableHTML = `<table border="1" cellpadding="5" style="border-collapse:collapse;">`;
+  
+  // Header row
+  tableHTML += `<tr style="background:#f0f0f0;">${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+  
+  // Data rows with green background for "Completed" status
+  cloudCards.forEach(card => {
+    const status = (card.Status || '').toLowerCase();
+    const rowStyle = status === 'completed' ? 'background:#c6efce;' : '';
+    tableHTML += `<tr style="${rowStyle}">`;
+    headers.forEach(h => {
+      let val = card[h] || '';
+      tableHTML += `<td>${String(val)}</td>`;
+    });
+    tableHTML += `</tr>`;
+  });
+  tableHTML += `</table>`;
+
+  const htmlContent = `
+    <html>
+      <head><meta charset="UTF-8"><title>STOP Cards Export</title></head>
+      <body>${tableHTML}</body>
+    </html>
+  `;
+
+  const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `STOP_Cards_Export_${new Date().toISOString().slice(0,10)}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  showToast('Excel exported successfully', 'success');
+}
+function updateExportButtons() {
+  const isHSEQ = currentUser.role === 'hseq' && currentUser.id !== '';
+  const exportBtn = document.getElementById('exportBtn');
+  const exportMyBtn = document.getElementById('exportMyBtn');
+  if (exportBtn) exportBtn.style.display = isHSEQ ? 'inline-block' : 'none';
+  if (exportMyBtn) exportMyBtn.style.display = isHSEQ ? 'inline-block' : 'none';
+}
+// ================================================================
+// COMPANY LOGIN
+// ================================================================
+function showCompanyLogin() {
+  if (currentUser.loggedIn) {
+    // Logout
+    currentUser = { name: 'Guest', id: '', loggedIn: false, role: 'worker', companyId: '', companyName: '', department: '' };
+    companyConfig = { folderId: '', observationsSheetId: '', workersSheetId: '', code: '', logo: '', pdfTitle: 'STOP Card System' };
+    $('userBadge').innerHTML = `<i class="fas fa-user"></i> ${t('guest')}`;
+    $('loginBtn').innerHTML = `<i class="fas fa-sign-in-alt"></i> ${t('login')}`;
+    $('workerLoginBtn').style.display = 'none';
+    $('syncBtn').style.display = 'none';
+    const titleEl = document.getElementById('appTitle');
+    if (titleEl) titleEl.textContent = 'STOP Card System';
+    showToast('Logged out', 'info');
+    loadMyCards(); loadCharts();
+    if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+    return;
+  }
+  $('companyLoginModal').classList.add('active');
+  $('companyIdInput').focus();
+}
+
+async function companyLogin() {
+   const btn = document.querySelector('#companyLoginModal .btn-primary');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Logging in...';
+
+  const companyId = $('companyIdInput').value.trim();
+  const password = $('companyPasswordInput').value.trim();
+  if (!companyId || !password) { showToast('Please fill in all fields', 'error'); return; }
+  $('loginError').style.display = 'none';
+  const result = await apiCall('login', { companyId, password });
+  if (result.success) {
+    currentUser = {
+      name: result.companyName || companyId,
+      id: companyId,
+      loggedIn: true,
+      role: 'admin',
+      companyId: companyId,
+      companyName: result.companyName || companyId,
+      department: ''
+    };
+    companyConfig = {
+      folderId: result.folderId || '',
+      observationsSheetId: result.observationsSheetId || '',
+      workersSheetId: result.workersSheetId || '',
+      code: result.code || '',
+      logo: result.logo || '',
+      pdfTitle: result.pdfTitle || 'STOP Card System',
+       sites: result.sites || [],   // NEW
+  areas: result.areas || []  
+    };
+    populateCompanyDropdowns();
+
+    $('companyLoginModal').classList.remove('active');
+    $('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escHtml(currentUser.name)}`;
+    $('loginBtn').innerHTML = `<i class="fas fa-sign-out-alt"></i> ${t('logout')}`;
+    $('workerLoginBtn').style.display = 'inline-block';
+    $('syncBtn').style.display = 'inline-block';
+    const titleEl = document.getElementById('appTitle');
+    if (titleEl) titleEl.textContent = companyConfig.pdfTitle;
+    showToast(`Welcome, ${currentUser.name}!`, 'success');
+    await loadWorkers();
+    if (companyConfig.requireWorkerLogin) {
+      showWorkerLogin();
+    }
+    loadMyCards(); loadCharts();
+    document.getElementById('qrBtn').style.display = (currentUser.role === 'admin' || currentUser.role === 'hseq') ? 'inline-block' : 'none';
+    if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+    if (pendingCards.length > 0) {
+      showToast(`${pendingCards.length} ${t('pendingCards')} available. Click "Sync" to upload.`, 'info', 5000);
+    }
+  } else {
+    $('loginError').textContent = result.error || 'Login failed';
+    $('loginError').style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.innerHTML = originalText;
+}
+
+// ================================================================
+// WORKER LOGIN
+// ================================================================
+function showWorkerLogin() {
+  $('workerLoginModal').classList.add('active');
+  $('workerIdInput').focus();
+}
+
+async function workerLogin() {
+    const btn = document.querySelector('#workerLoginModal .btn-primary');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Logging in...';
+
+  const workerId = $('workerIdInput').value.trim();
+  const password = $('workerPasswordInput').value.trim();
+  if (!workerId || !password) { showToast('Please fill in all fields', 'error'); return; }
+  $('workerLoginError').style.display = 'none';
+  const result = await apiCall('verifyWorker', {
+    workerId, password,
+    workerSheetId: companyConfig.workersSheetId
+  });
+  if (result.success) {
+    currentUser.name = result.name || workerId;
+    currentUser.id = workerId;
+    currentUser.job = result.job || '';
+    currentUser.department = result.department || '';
+    currentUser.role = result.role || 'worker';
+    $('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escHtml(currentUser.name)} (${currentUser.role.toUpperCase()})`;
+    $('workerLoginModal').classList.remove('active');
+    showToast(`Worker ${currentUser.name} logged in`, 'success');
+    $('reporterName').value = currentUser.name;
+    $('reporterId').value = currentUser.id;
+    $('jobTitle').value = currentUser.job || '';
+    $('department').value = currentUser.department || '';
+    loadMyCards();
+    if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+    // Show export button for HSEQ
+const isHSEQ = currentUser.role === 'hseq';
+document.getElementById('exportBtn').style.display = isHSEQ ? 'inline-block' : 'none';
+document.getElementById('exportMyBtn').style.display = isHSEQ ? 'inline-block' : 'none';
+  } else {
+    $('workerLoginError').textContent = result.error || 'Login failed';
+    $('workerLoginError').style.display = 'block';
+  }
+    btn.disabled = false;
+  btn.innerHTML = originalText;
+}
+
+// ================================================================
+// LOAD WORKERS
+// ================================================================
+async function loadWorkers() {
+  if (!companyConfig.workersSheetId) return;
+  const result = await apiCall('getWorkers', { workerSheetId: companyConfig.workersSheetId });
+  if (result.success && result.workers) {
+    workersList = result.workers;
+    const datalist = $('workerSuggestions');
+    datalist.innerHTML = '';
+    workersList.forEach(w => {
+      const opt = document.createElement('option');
+      opt.value = w.id;
+      opt.dataset.name = w.name;
+      opt.dataset.job = w.job;
+      datalist.appendChild(opt);
+    });
+  }
+}
+
+$('reporterId').addEventListener('input', function() {
+  const id = this.value.trim();
+  const worker = workersList.find(w => w.id === id);
+  if (worker) {
+    // Auto-fill but allow manual override (don't overwrite if user has typed)
+    if (!$('reporterName').value || $('reporterName').value === '') {
+      $('reporterName').value = worker.name;
+    }
+    if (!$('jobTitle').value || $('jobTitle').value === '') {
+      $('jobTitle').value = worker.job || '';
+    }
+    if (!$('department').value || $('department').value === '') {
+      $('department').value = worker.department || '';
+    }
+  }
+});
+
+// ================================================================
+// FILE UPLOAD (main)
+// ================================================================
+function handleFileSelect(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return; }
+  if (file.size > 5*1024*1024) { showToast('File too large. Max 5MB.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    selectedFileBase64 = dataUrl.split(',')[1];
+    $('uploadPreview').innerHTML = `<img src="${dataUrl}" class="preview-img"/><div class="file-name">${file.name}</div><button class="remove-btn" onclick="removeFile()"><i class="fas fa-times"></i> Remove</button>`;
+  };
+  reader.readAsDataURL(file);
+}
+function removeFile() { selectedFileBase64 = null; $('uploadPreview').innerHTML=''; $('fileInput').value=''; }
+
+function handleCAFileSelect(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return; }
+  if (file.size > 5*1024*1024) { showToast('File too large. Max 5MB.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    caFileBase64 = dataUrl.split(',')[1];
+    $('caUploadPreview').innerHTML = `<img src="${dataUrl}" class="preview-img"/><div class="file-name">${file.name}</div><button class="remove-btn" onclick="removeCAFile()"><i class="fas fa-times"></i> Remove</button>`;
+  };
+  reader.readAsDataURL(file);
+}
+function removeCAFile() { caFileBase64 = null; $('caUploadPreview').innerHTML=''; $('caFileInput').value=''; }
+
+// ================================================================
+// SAFETY CHECKS
+// ================================================================
+const safetyChecklists = {
+  hse: {
+    lifeSavingRules: [
+      { en: 'Work Authorization', ar: 'تفويض العمل', icon: 'fa-file-signature' },
+      { en: 'Energy Isolation', ar: 'عزل الطاقة', icon: 'fa-bolt' },
+      { en: 'Line of Fire', ar: 'خط النار', icon: 'fa-bullseye' },
+      { en: 'Working at Height', ar: 'العمل على الارتفاعات', icon: 'fa-mountain' },
+      { en: 'Confined Space', ar: 'الأماكن المغلقة', icon: 'fa-archway' },
+      { en: 'Driving Safety', ar: 'سلامة القيادة', icon: 'fa-car' },
+      { en: 'Hot Work', ar: 'الأعمال الساخنة', icon: 'fa-fire' },
+      { en: 'Mechanical Lifting', ar: 'الرفع الميكانيكي', icon: 'fa-arrow-up' },
+      { en: 'Bypassing Safety Controls', ar: 'تجاوز ضوابط السلامة', icon: 'fa-exclamation-triangle' }
+    ],
+    generalHazards: [
+      { en: 'Adequate lighting', ar: 'إضاءة كافية', icon: 'fa-lightbulb' },
+      { en: 'Adequate ventilation', ar: 'تهوية كافية', icon: 'fa-wind' },
+      { en: 'Spill containment available', ar: 'احتواء التسرب متاح', icon: 'fa-oil-can' },
+      { en: 'Fall protection in place', ar: 'حماية من السقوط', icon: 'fa-helmet-safety' },
+      { en: 'Electrical hazards controlled', ar: 'مخاطر الكهرباء مسيطر عليها', icon: 'fa-plug' },
+      { en: 'Fire extinguishers accessible', ar: 'طفايات حريق متاحة', icon: 'fa-fire-extinguisher' },
+      { en: 'Warning signs & barricades in place', ar: 'علامات تحذير وحواجز', icon: 'fa-signs-post' },
+      { en: 'Hydrocarbon leaks controlled', ar: 'تسرب الهيدروكربون مسيطر عليه', icon: 'fa-oil-can' },
+      { en: 'Pressure systems secured', ar: 'أنظمة الضغط مؤمنة', icon: 'fa-gauge-high' },
+      { en: 'Hazardous atmosphere monitored', ar: 'الغلاف الجوي الخطير مراقب', icon: 'fa-radiation' },
+      { en: 'Rotating equipment guarded', ar: 'المعدات الدوارة محمية', icon: 'fa-cogs' },
+      { en: 'Grounding/bonding verified', ar: 'التأريض/الربط مؤكد', icon: 'fa-bolt' },
+      { en: 'Housekeeping', ar: 'النظافة والترتيب', icon: 'fa-broom' },
+      { en: 'Safe Platforms, Scaffolding & Supports', ar: 'منصات وسقالات آمنة', icon: 'fa-layer-group' },
+      { en: 'Equipment in good condition', ar: 'المعدات في حالة جيدة', icon: 'fa-check-circle' }
+    ]
+  },
+  bbs: {
+    ppe: [
+      { en: 'Hand & arm protection', ar: 'حماية اليدين والذراعين', icon: 'fa-hand' },
+      { en: 'Eyes & face protection', ar: 'حماية العينين والوجه', icon: 'fa-glasses' },
+      { en: 'Head & Ears protection', ar: 'حماية الرأس والأذنين', icon: 'fa-hard-hat' },
+      { en: 'Respiratory protection', ar: 'حماية الجهاز التنفسي', icon: 'fa-head-side-mask' },
+      { en: 'Foot & leg protection', ar: 'حماية القدمين والساقين', icon: 'fa-shoe-prints' },
+      { en: 'Working clothes / body', ar: 'ملابس العمل / الجسم', icon: 'fa-vest' }
+    ],
+    reactionOfPeople: [
+      { en: 'Adjusting PPE', ar: 'تعديل معدات الوقاية الشخصية', icon: 'fa-user-cog' },
+      { en: 'Changing work position', ar: 'تغيير وضعية العمل', icon: 'fa-arrows-alt' },
+      { en: 'Stopping work / rearranging', ar: 'إيقاف العمل / إعادة ترتيب', icon: 'fa-hand-paper' }
+    ],
+    position: [
+      { en: 'Line of fire', ar: 'خط النار', icon: 'fa-bullseye' },
+      { en: 'Attention', ar: 'الانتباه', icon: 'fa-eye' },
+      { en: 'Working position', ar: 'وضعية العمل', icon: 'fa-chair' },
+      { en: 'Stabilized surface', ar: 'سطح مستقر', icon: 'fa-arrows-spin' },
+      { en: 'Lifting / moving / carrying', ar: 'الرفع / النقل / الحمل', icon: 'fa-dumbbell' },
+      { en: 'Ascending / descending', ar: 'الصعود / النزول', icon: 'fa-arrow-up' },
+      { en: 'Repetitive motion', ar: 'حركة متكررة', icon: 'fa-repeat' }
+    ],
+    toolsEquipment: [
+      { en: 'Suitable for job / in safe condition', ar: 'مناسب للعمل / في حالة آمنة', icon: 'fa-tools' },
+      { en: 'Used correctly', ar: 'استخدام صحيح', icon: 'fa-check-double' },
+      { en: 'De-energizing / Securing equipment', ar: 'فصل الطاقة / تأمين المعدات', icon: 'fa-unlink' }
+    ],
+    procedures: [
+      { en: 'Permit to work', ar: 'تصريح العمل', icon: 'fa-clipboard-list' },
+      { en: 'Emergency procedures', ar: 'إجراءات الطوارئ', icon: 'fa-bell' },
+      { en: 'Safe work procedures', ar: 'إجراءات العمل الآمنة', icon: 'fa-book' },
+      { en: 'Work instructions', ar: 'تعليمات العمل', icon: 'fa-list-check' }
+    ],
+    housekeeping: [
+      { en: 'Material storage', ar: 'تخزين المواد', icon: 'fa-warehouse' },
+      { en: 'Waste / Spills management', ar: 'إدارة النفايات / التسربات', icon: 'fa-trash' },
+      { en: 'Tidiness & cleanliness', ar: 'النظافة والترتيب', icon: 'fa-broom' },
+      { en: 'Barricade & warnings', ar: 'حواجز وتحذيرات', icon: 'fa-cone' },
+      { en: 'Access & egress', ar: 'الدخول والخروج', icon: 'fa-door-open' }
+    ]
+  }
+};
+function toggleSafetyChecks() {
+  const mode = $('safetyMode').value;
+  renderSafetyChecks(mode);
+}
+
+function renderSafetyChecks(mode) {
+  const container = $('safetyChecksContainer');
+  const checks = safetyChecklists[mode] || safetyChecklists.hse;
+  let html = '';
+
+  for (const [category, items] of Object.entries(checks)) {
+    const categoryLabel = t(category) || category;
+    html += `<div class="check-section">
+      <div class="section-title">
+        <span>${categoryLabel}</span>
+        <span class="text-muted text-sm">${t('safe')} / ${t('unsafe')}</span>
+      </div>`;
+
+    items.forEach(item => {
+      // Use localized text based on current language
+      const label = currentLang === 'ar' ? item.ar : item.en;
+      const icon = item.icon || 'fa-check';
+      const key = category + '_' + item.en.replace(/\s/g, '_'); // key remains English-based
+      const safe = safetyChecksData[key] !== undefined ? safetyChecksData[key] : true;
+
+      html += `
+        <div class="check-item">
+          <i class="fas ${icon}" style="width:20px; color:#1a73e8;"></i>
+          <label>${label}</label>
+          <label style="font-weight:normal;font-size:12px;">
+            <input type="checkbox" data-key="${key}" ${safe ? 'checked' : ''} onchange="safetyCheckChanged('${key}', this.checked)" />
+            <span style="color:${safe ? '#0f9d58' : '#d32f2f'}">${safe ? t('safe') : t('unsafe')}</span>
+          </label>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function safetyCheckChanged(key, isSafe) {
+  safetyChecksData[key] = isSafe;
+  const container = $('safetyChecksContainer');
+  const checkItem = container.querySelector(`[data-key="${key}"]`);
+  if (checkItem) {
+    const span = checkItem.parentElement.querySelector('span');
+    if (span) { span.textContent = isSafe ? t('safe') : t('unsafe'); span.style.color = isSafe ? '#0f9d58' : '#d32f2f'; }
+  }
+}
+
+// ================================================================
+// SUBMIT STOP CARD
+// ================================================================
+async function submitStopCard(e) {
+  e.preventDefault();
+  const btn = $('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Submitting...';
+
+  try {
+    const safetyChecks = {};
+    for (const [key, value] of Object.entries(safetyChecksData)) safetyChecks[key] = value;
+    const data = {
+      companyId: currentUser.companyId || '',
+      reporter: $('reporterName').value.trim(),
+      reporterId: $('reporterId').value.trim(),
+      job: $('jobTitle').value.trim(),
+      department: $('department').value,
+      area: $('area').value.trim(),
+      location: $('location').value.trim(),
+      observation: $('observation').value.trim(),
+      obsType: $('obsType').value,
+      status: $('status').value,
+      recommendation: $('recommendation').value.trim(),
+      targetDate: $('targetDate').value,
+      respDept: $('respDept').value,
+      timestamp: new Date().toISOString(),
+      safetyChecks: JSON.stringify(safetyChecks),
+      imageUrl: ''
+    };
+    if (!data.reporter || !data.area || !data.location || !data.observation || !data.obsType) {
+      showToast('Please fill in all required fields.', 'error');
+      btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> '+t('submit');
+      return false;
+    }
+
+    // If worker is logged in, set reporterId
+    if (currentUser.id) {
+      data.reporterId = currentUser.id;
+      $('reporterId').value = currentUser.id;
+    }
+
+    let imageUrl = '';
+    if (selectedFileBase64) {
+      if (currentUser.loggedIn && companyConfig.folderId) {
+        const uploadResult = await apiCall('uploadImage', { file: selectedFileBase64, reporter: data.reporter, timestamp: data.timestamp, folderId: companyConfig.folderId });
+        if (uploadResult.success) { imageUrl = uploadResult.url; showToast('Image uploaded ✓','success'); }
+        else showToast('Image upload failed: ' + uploadResult.error, 'error');
+      } else {
+        data.imageBase64 = selectedFileBase64;
+      }
+    }
+    data.imageUrl = imageUrl;
+
+    if (currentUser.loggedIn && companyConfig.observationsSheetId) {
+      const saveResult = await apiCall('saveCard', { data, imageUrl, observationsSheetId: companyConfig.observationsSheetId, safetyChecks: JSON.stringify(safetyChecks) ,   loggedInUserId: currentUser.id || '' // ADD THIS
+});
+      if (saveResult.success) {
+        showToast('STOP Card saved successfully! ID: ' + (saveResult.id || 'N/A'), 'success');
+        $('stopCardForm').reset(); removeFile();
+        safetyChecksData = {}; renderSafetyChecks($('safetyMode').value);
+        await loadMyCards(); await loadCharts();
+        if ($('panel-cloud').classList.contains('active')) await loadCloudCards();
+      } else {
+        showToast('Failed to save: ' + (saveResult.error || 'unknown'), 'error');
+        savePendingCard(data);
+      }
+    } else {
+      savePendingCard(data);
+      showToast('Card saved locally. Login to sync.', 'info');
+      $('stopCardForm').reset(); removeFile();
+      safetyChecksData = {}; renderSafetyChecks($('safetyMode').value);
+      updatePendingUI();
+      loadMyCards();
+    }
+  } catch (err) { showToast('Error: '+err.message, 'error'); }
+  finally { btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> '+t('submit'); }
+  return false;
+}
+
+function savePendingCard(data) {
+  pendingCards.push(data);
+  localStorage.setItem('pendingCards', JSON.stringify(pendingCards));
+  updatePendingUI();
+}
+
+function updatePendingUI() {
+  const count = pendingCards.length;
+  const syncBtn = $('syncBtn');
+  if (syncBtn) {
+    if (count > 0) {
+      syncBtn.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> ${t('syncPending')} (${count})`;
+      syncBtn.style.display = 'inline-block';
+    } else {
+      syncBtn.style.display = 'none';
+    }
+  }
+}
+
+// ================================================================
+// SYNC PENDING CARDS
+// ================================================================
+async function syncPendingCards() {
+  if (!currentUser.loggedIn || !companyConfig.observationsSheetId) {
+    showToast('Please login first', 'error');
+    return;
+  }
+  if (pendingCards.length === 0) {
+    showToast(t('noPending'), 'info');
+    return;
+  }
+  const result = await apiCall('uploadPendingCards', {
+    cards: pendingCards,
+    observationsSheetId: companyConfig.observationsSheetId,
+      loggedInUserId: currentUser.id || '' // ADD THIS
+
+  });
+  if (result.success) {
+    showToast(t('syncSuccess'), 'success');
+    pendingCards = [];
+    localStorage.removeItem('pendingCards');
+    updatePendingUI();
+    loadMyCards(); loadCharts();
+    if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+  } else {
+    showToast('Sync failed: ' + (result.error || ''), 'error');
+  }
+}
+
+// ================================================================
+// LOAD MY CARDS (local + cloud combined)
+// ================================================================
+async function loadMyCards() {
+  const container = $('myCardsContainer');
+  container.innerHTML = `<div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i><br>${t('loading')}</div>`;
+
+  let localCards = pendingCards.map((c, idx) => {
+    return { ...c, _local: true, _localIndex: idx, _sheetRowIndex: -1 };
+  });
+
+  let cloudUserCards = [];
+  if (currentUser.loggedIn && companyConfig.observationsSheetId) {
+    const result = await apiCall('getMyCards', {
+      reporter: currentUser.name,
+      reporterId: currentUser.id,
+      observationsSheetId: companyConfig.observationsSheetId,
+      userRole: currentUser.role
+    });
+    if (result.success && result.cards) {
+      cloudUserCards = result.cards.map((c, idx) => {
+        c._sheetRowIndex = idx + 2;
+        c._local = false;
+        return c;
+      });
+    }
+  }
+
+  const allCards = [...localCards, ...cloudUserCards];
+
+  if (allCards.length === 0) {
+    container.innerHTML = `<div class="text-center text-muted" style="padding:30px 0;"><i class="fas fa-inbox" style="font-size:40px;display:block;margin-bottom:12px;"></i>${t('noCards')}</div>`;
+    return;
+  }
+
+  renderMyCards(container, allCards);
+}
+
+// ================================================================
+// RENDER MY CARDS (with local edit/upload)
+// ================================================================
+function renderMyCards(container, cards) {
+  const isHSEQ = currentUser.role === 'hseq' && currentUser.id !== '';
+  const userDept = currentUser.department || '';
+
+  let html = '';
+  cards.forEach((card, index) => {
+    const isLocal = card._local || false;
+    const date = card.timestamp || card.Timestamp ? new Date(card.timestamp || card.Timestamp).toLocaleDateString() : 'N/A';
+    const statusBadge = getStatusBadge(card.status || card.Status);
+    const typeBadge = getTypeBadge(card.obsType || card.ObservationType);
+    const respDept = card.respDept || card.ResponsibleDepartment || '';
+    const hasCA = card.CorrectiveActionImage || card.CorrectiveActionDescription;
+    const approval = card.Approval || 'pending';
+    const approvalBadge = `<span class="badge badge-approval-${approval}">${approval}</span>`;
+    
+    let imageSrc = '';
+    if (card.imageUrl) {
+      imageSrc = card.imageUrl;
+    } else if (card.imageBase64) {
+      imageSrc = `data:image/jpeg;base64,${card.imageBase64}`;
+    }
+    const obsText = card.observation || card.Observation || 'No description';
+    const authType = card.AuthType || (card.reporterId && card.reporterId.trim() !== '' ? 'worker' : 'guest');
+
+    html += `<div class="stop-card-item">
+      <div class="top-row">
+        <div class="obs-text">${escHtml(obsText)}</div>
+        ${imageSrc ? `<img src="${imageSrc}" class="image-thumb" onclick="window.open('${imageSrc}','_blank')" />` : ''}
+        ${isLocal ? `<span class="badge badge-warning">${t('local')}</span>` : ''}
+        ${isHSEQ ? `<span class="badge badge-auth-${authType}">${authType}</span>` : ''}
+      </div>
+      <div class="meta">
+        <span><i class="fas fa-user"></i> ${escHtml(card.reporter || card.Reporter || 'Unknown')}</span>
+        <span><i class="fas fa-map-marker-alt"></i> ${escHtml(card.area || card.Area || '')} ${card.location || card.Location ? ' - ' + escHtml(card.location || card.Location) : ''}</span>
+        <span><i class="fas fa-calendar"></i> ${date}</span>
+        <span>${typeBadge}</span>
+        <span>${statusBadge}</span>
+        ${card.department || card.Department ? `<span><i class="fas fa-building"></i> ${escHtml(card.department || card.Department)}</span>` : ''}
+        ${respDept ? `<span><i class="fas fa-users"></i> ${escHtml(respDept)}</span>` : ''}
+        ${!isLocal ? approvalBadge : ''}
+        ${hasCA ? `<span class="badge badge-warning"><i class="fas fa-check"></i> ${t('correctiveActionAdded')}</span>` : ''}
+      </div>
+      <div class="actions">
+        ${imageSrc ? `<a href="${imageSrc}" target="_blank" class="btn btn-sm btn-outline"><i class="fas fa-image"></i> ${t('viewImage')}</a>` : ''}
+        <button class="btn btn-sm btn-success" onclick="generatePDF('my', ${index})"><i class="fas fa-file-pdf"></i> ${t('downloadPDF')}</button>
+        ${isLocal ? `
+          <button class="btn btn-sm btn-primary" onclick="openLocalEditModal(${index})"><i class="fas fa-edit"></i> ${t('edit')}</button>
+          <button class="btn btn-sm btn-success" onclick="uploadSingleCard(${index})"><i class="fas fa-cloud-upload-alt"></i> ${t('syncPending')}</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteLocalCard(${card._localIndex})"><i class="fas fa-trash-alt"></i> Delete</button>
+        ` : `
+          ${isHSEQ ? `<button class="btn btn-sm btn-primary" onclick="openFullEditModalMy(${index})"><i class="fas fa-edit"></i> ${t('edit')}</button>` : ''}
+          ${isHSEQ ? `<button class="btn btn-sm ${approval === 'approved' ? 'btn-danger' : 'btn-success'}" onclick="toggleApprovalMy(${index})"><i class="fas fa-check-double"></i> ${approval === 'approved' ? t('unapprove') : t('approve')}</button>` : ''}
+          ${((isHSEQ) || (userDept && respDept && userDept === respDept)) && card._sheetRowIndex > 0 ? `<button class="btn btn-sm btn-warning" onclick="openCAModalMy(${index})"><i class="fas fa-plus"></i> ${t('addCorrectiveAction')}</button>` : ''}
+        `}
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+  window._myCards = cards;
+  window._myCardsType = 'my';
+}
+// ================================================================
+// RENDER CLOUD CARDS
+// ================================================================
+function renderCloudCards(container, cards) {
+  if (!cards || cards.length === 0) {
+    container.innerHTML = `<div class="text-center text-muted"><i class="fas fa-inbox"></i> ${t('noCards')}</div>`;
+    return;
+  }
+  const isHSEQ = currentUser.role === 'hseq' && currentUser.id !== '';
+  const userDept = currentUser.department || '';
+
+  let html = '';
+  cards.forEach((card, index) => {
+    const date = card.Timestamp ? new Date(card.Timestamp).toLocaleDateString() : 'N/A';
+    const statusBadge = getStatusBadge(card.Status);
+    const typeBadge = getTypeBadge(card.ObservationType);
+    const respDept = card.ResponsibleDepartment || '';
+    const approval = card.Approval || 'pending';
+    const approvalBadge = `<span class="badge badge-approval-${approval}">${approval}</span>`;
+    const hasCA = card.CorrectiveActionImage || card.CorrectiveActionDescription;
+    const authType = card.AuthType || (card.ReporterId && card.ReporterId.trim() !== '' ? 'worker' : 'guest');
+    const canAddCA = (isHSEQ) || (userDept && respDept && userDept === respDept);
+
+    html += `<div class="stop-card-item">
+      <div class="top-row">
+        <div class="obs-text">${escHtml(card.Observation || 'No description')}</div>
+        ${card.ImageUrl ? `<img src="${card.ImageUrl}" class="image-thumb" onclick="window.open('${card.ImageUrl}','_blank')" />` : ''}
+        ${isHSEQ ? `<span class="badge badge-auth-${authType}">${authType}</span>` : ''}
+      </div>
+      <div class="meta">
+        <span><i class="fas fa-user"></i> ${escHtml(card.Reporter || 'Unknown')}</span>
+        <span><i class="fas fa-map-marker-alt"></i> ${escHtml(card.Area || '')} ${card.Location ? ' - ' + escHtml(card.Location) : ''}</span>
+        <span><i class="fas fa-calendar"></i> ${date}</span>
+        <span>${typeBadge}</span>
+        <span>${statusBadge}</span>
+        ${card.Department ? `<span><i class="fas fa-building"></i> ${escHtml(card.Department)}</span>` : ''}
+        ${respDept ? `<span><i class="fas fa-users"></i> ${escHtml(respDept)}</span>` : ''}
+        ${approvalBadge}
+        ${hasCA ? `<span class="badge badge-warning"><i class="fas fa-check"></i> ${t('correctiveActionAdded')}</span>` : ''}
+      </div>
+      <div class="actions">
+        ${card.ImageUrl ? `<a href="${card.ImageUrl}" target="_blank" class="btn btn-sm btn-outline"><i class="fas fa-image"></i> ${t('viewImage')}</a>` : ''}
+        <button class="btn btn-sm btn-success" onclick="generatePDF('cloud', ${index})"><i class="fas fa-file-pdf"></i> ${t('downloadPDF')}</button>
+        ${isHSEQ ? `<button class="btn btn-sm btn-primary" onclick="openFullEditModalCloud(${index})"><i class="fas fa-edit"></i> ${t('edit')}</button>` : ''}
+        ${isHSEQ ? `<button class="btn btn-sm ${approval === 'approved' ? 'btn-danger' : 'btn-success'}" onclick="toggleApprovalCloud(${index})"><i class="fas fa-check-double"></i> ${approval === 'approved' ? t('unapprove') : t('approve')}</button>` : ''}
+        
+${isHSEQ ? `<button class="btn btn-sm btn-danger" onclick="deleteCloudCard(${index})"><i class="fas fa-trash-alt"></i> Delete</button>` : ''}
+        ${canAddCA ? `<button class="btn btn-sm btn-warning" onclick="openCAModalCloud(${index})"><i class="fas fa-plus"></i> ${t('addCorrectiveAction')}</button>` : ''}
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+  window._cloudCards = cards;
+}
+
+// ================================================================
+// CLOUD CARDS LOAD
+// ================================================================
+async function loadCloudCards() {
+  const container = $('cloudContainer');
+  container.innerHTML = `<div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i><br>${t('loading')}</div>`;
+  if (!currentUser.loggedIn || !companyConfig.observationsSheetId) {
+    container.innerHTML = `<div class="text-center text-muted"><i class="fas fa-cloud-upload-alt"></i> ${t('loginRequired')}</div>`;
+    return;
+  }
+  try {
+    const result = await apiCall('getAllCards', {
+      observationsSheetId: companyConfig.observationsSheetId,
+      userRole: currentUser.role
+    });
+    if (result.success && result.cards) {
+      cloudCards = result.cards.map((c, idx) => {
+        c._sheetRowIndex = idx + 2;
+        return c;
+      });
+      $('cloudCount').textContent = `${cloudCards.length} cards`;
+      renderCloudCards(container, cloudCards);
+    } else {
+      container.innerHTML = `<div class="text-center text-muted"><i class="fas fa-exclamation-circle"></i> ${result.error||'No data available'}</div>`;
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="text-center text-muted"><i class="fas fa-bug"></i> Error: ${err.message}</div>`;
+  }
+}
+
+// ================================================================
+// FULL EDIT MODAL – CLOUD
+// ================================================================
+function openFullEditModalCloud(index) {
+  const cards = window._cloudCards || [];
+  const card = cards[index];
+  if (!card) return;
+  editingRowIndex = card._sheetRowIndex - 1;
+  editingCard = card;
+
+  $('editReporterCloud').value = card.Reporter || '';
+  $('editReporterIdCloud').value = card.ReporterId || '';
+  $('editJobCloud').value = card.Job || '';
+  $('editAreaCloud').value = card.Area || '';
+  $('editLocationCloud').value = card.Location || '';
+  $('editObservationCloud').value = card.Observation || '';
+  $('editObsTypeCloud').value = card.ObservationType || '';
+  $('editStatusCloud').value = card.Status || '';
+  $('editRecommendationCloud').value = card.Recommendation || '';
+  $('editTargetDateCloud').value = card.TargetDate || '';
+  $('editRespDeptCloud').value = card.ResponsibleDepartment || '';
+  $('editApprovalCloud').value = card.Approval || 'pending';
+
+  $('fullEditModalCloud').classList.add('active');
+  $('fullEditErrorCloud').style.display = 'none';
+}
+
+async function saveFullEditCloud() {
+  const rowIndex = editingRowIndex;
+  const data = {
+    reporter: $('editReporterCloud').value.trim(),
+    reporterId: $('editReporterIdCloud').value.trim(),
+    job: $('editJobCloud').value.trim(),
+    area: $('editAreaCloud').value.trim(),
+    location: $('editLocationCloud').value.trim(),
+    observation: $('editObservationCloud').value.trim(),
+    obsType: $('editObsTypeCloud').value,
+    status: $('editStatusCloud').value,
+    recommendation: $('editRecommendationCloud').value.trim(),
+    targetDate: $('editTargetDateCloud').value,
+    respDept: $('editRespDeptCloud').value,
+    approval: $('editApprovalCloud').value,
+    department: $('editRespDeptCloud').value // for consistency
+  };
+
+  const result = await apiCall('updateFullObservation', {
+    rowIndex: rowIndex,
+    observationsSheetId: companyConfig.observationsSheetId,
+    data: data
+  });
+
+  if (result.success) {
+    showToast('Observation updated', 'success');
+    $('fullEditModalCloud').classList.remove('active');
+    loadCloudCards();
+    loadMyCards();
+    loadCharts();
+  } else {
+    $('fullEditErrorCloud').textContent = result.error || 'Update failed';
+    $('fullEditErrorCloud').style.display = 'block';
+  }
+}
+
+// ================================================================
+// Voice to text
+// ================================================================
+let recognition = null;
+let isListening = false;
+
+function toggleVoiceRecognition() {
+  if (isListening) {
+    stopVoiceRecognition();
+    return;
+  }
+  startVoiceRecognition();
+}
+
+function startVoiceRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('Voice recognition not supported in this browser.', 'error');
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.onresult = function(event) {
+    let final = '';
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        final += event.results[i][0].transcript;
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    const textarea = $('observation');
+    // Append final results
+    if (final) {
+      if (textarea.value) {
+        textarea.value += ' ' + final;
+      } else {
+        textarea.value = final;
+      }
+      // Clear interim
+      // We can show interim in a separate div, but we'll just append final
+    }
+    // Show interim (optional – you can display it in a temporary span)
+  };
+  recognition.onerror = function(event) {
+    console.error('Speech error:', event.error);
+    showToast('Voice error: ' + event.error, 'error');
+    stopVoiceRecognition();
+  };
+  recognition.onend = function() {
+    isListening = false;
+    document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+  };
+  recognition.start();
+  isListening = true;
+  document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i>';
+}
+
+function stopVoiceRecognition() {
+  if (recognition) {
+    recognition.stop();
+    recognition = null;
+  }
+  isListening = false;
+  document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+}
+// ================================================================
+// FULL EDIT MODAL – MY CARDS
+// ================================================================
+function openFullEditModalMy(index) {
+  const cards = window._myCards || [];
+  const card = cards[index];
+  if (!card || card._local) return;
+  editingRowIndex = card._sheetRowIndex - 1;
+  editingCard = card;
+
+  $('editReporterMy').value = card.Reporter || '';
+  $('editReporterIdMy').value = card.ReporterId || '';
+  $('editJobMy').value = card.Job || '';
+  $('editAreaMy').value = card.Area || '';
+  $('editLocationMy').value = card.Location || '';
+  $('editObservationMy').value = card.Observation || '';
+  $('editObsTypeMy').value = card.ObservationType || '';
+  $('editStatusMy').value = card.Status || '';
+  $('editRecommendationMy').value = card.Recommendation || '';
+  $('editTargetDateMy').value = card.TargetDate || '';
+  $('editRespDeptMy').value = card.ResponsibleDepartment || '';
+  $('editApprovalMy').value = card.Approval || 'pending';
+
+  $('fullEditModalMy').classList.add('active');
+  $('fullEditErrorMy').style.display = 'none';
+}
+
+async function saveFullEditMy() {
+  const rowIndex = editingRowIndex;
+  const data = {
+    reporter: $('editReporterMy').value.trim(),
+    reporterId: $('editReporterIdMy').value.trim(),
+    job: $('editJobMy').value.trim(),
+    area: $('editAreaMy').value.trim(),
+    location: $('editLocationMy').value.trim(),
+    observation: $('editObservationMy').value.trim(),
+    obsType: $('editObsTypeMy').value,
+    status: $('editStatusMy').value,
+    recommendation: $('editRecommendationMy').value.trim(),
+    targetDate: $('editTargetDateMy').value,
+    respDept: $('editRespDeptMy').value,
+    approval: $('editApprovalMy').value,
+    department: $('editRespDeptMy').value
+  };
+
+  const result = await apiCall('updateFullObservation', {
+    rowIndex: rowIndex,
+    observationsSheetId: companyConfig.observationsSheetId,
+    data: data
+  });
+
+  if (result.success) {
+    showToast('Observation updated', 'success');
+    $('fullEditModalMy').classList.remove('active');
+    loadMyCards();
+    loadCloudCards();
+    loadCharts();
+  } else {
+    $('fullEditErrorMy').textContent = result.error || 'Update failed';
+    $('fullEditErrorMy').style.display = 'block';
+  }
+}
+
+// ================================================================
+// LOCAL CARD EDIT
+// ================================================================
+function openLocalEditModal(index) {
+  const cards = window._myCards || [];
+  const card = cards[index];
+  if (!card || !card._local) return;
+  localEditIndex = index;
+  $('localEditReporter').value = card.reporter || '';
+  $('localEditReporterId').value = card.reporterId || '';
+  $('localEditJob').value = card.job || '';
+  $('localEditArea').value = card.area || '';
+  $('localEditLocation').value = card.location || '';
+  $('localEditObservation').value = card.observation || '';
+  $('localEditObsType').value = card.obsType || '';
+  $('localEditStatus').value = card.status || '';
+  $('localEditRecommendation').value = card.recommendation || '';
+  $('localEditTargetDate').value = card.targetDate || '';
+  $('localEditRespDept').value = card.respDept || '';
+  $('localEditModal').classList.add('active');
+}
+
+function saveLocalEdit() {
+  const cards = window._myCards || [];
+  const card = cards[localEditIndex];
+  if (!card || !card._local) return;
+  card.reporter = $('localEditReporter').value.trim();
+  card.reporterId = $('localEditReporterId').value.trim();
+  card.job = $('localEditJob').value.trim();
+  card.area = $('localEditArea').value.trim();
+  card.location = $('localEditLocation').value.trim();
+  card.observation = $('localEditObservation').value.trim();
+  card.obsType = $('localEditObsType').value;
+  card.status = $('localEditStatus').value;
+  card.recommendation = $('localEditRecommendation').value.trim();
+  card.targetDate = $('localEditTargetDate').value;
+  card.respDept = $('localEditRespDept').value;
+  pendingCards[card._localIndex] = { ...card };
+  localStorage.setItem('pendingCards', JSON.stringify(pendingCards));
+  showToast('Local card updated', 'success');
+  $('localEditModal').classList.remove('active');
+  loadMyCards();
+}
+
+// ================================================================
+// UPLOAD SINGLE LOCAL CARD
+// ================================================================
+async function uploadSingleCard(index) {
+  const cards = window._myCards || [];
+  const card = cards[index];
+  if (!card || !card._local) return;
+  if (!currentUser.loggedIn || !companyConfig.observationsSheetId) {
+    showToast('Please login first', 'error');
+    return;
+  }
+  const data = { ...card };
+  delete data._local;
+  delete data._localIndex;
+  let imageUrl = data.imageUrl || '';
+  if (data.imageBase64 && !imageUrl) {
+    const uploadResult = await apiCall('uploadImage', {
+      file: data.imageBase64,
+      reporter: data.reporter || 'unknown',
+      timestamp: data.timestamp || new Date().toISOString(),
+      folderId: companyConfig.folderId
+    });
+    if (uploadResult.success) {
+      imageUrl = uploadResult.url;
+    } else {
+      showToast('Image upload failed: ' + uploadResult.error, 'error');
+      return;
+    }
+    delete data.imageBase64;
+  }
+  data.imageUrl = imageUrl;
+  const result = await apiCall('saveCard', {
+    data: data,
+    imageUrl: imageUrl,
+    observationsSheetId: companyConfig.observationsSheetId,
+    safetyChecks: data.safetyChecks || '{}',
+      loggedInUserId: currentUser.id || '' // ADD THIS
+
+  });
+  if (result.success) {
+    showToast('Card uploaded successfully', 'success');
+    pendingCards.splice(card._localIndex, 1);
+    localStorage.setItem('pendingCards', JSON.stringify(pendingCards));
+    updatePendingUI();
+    loadMyCards();
+    loadCharts();
+    if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+  } else {
+    showToast('Upload failed: ' + (result.error || ''), 'error');
+  }
+}
+
+// ================================================================
+// APPROVAL TOGGLE
+// ================================================================
+async function toggleApprovalMy(index) {
+  const cards = window._myCards || [];
+  const card = cards[index];
+  if (!card || card._local) return;
+  if (currentUser.role !== 'hseq') { showToast(t('hseqOnly'), 'error'); return; }
+  const current = card.Approval || 'pending';
+  const next = current === 'approved' ? 'unapproved' : 'approved';
+  const rowIndex = card._sheetRowIndex - 1;
+  const result = await apiCall('updateObservation', {
+    rowIndex, observationsSheetId: companyConfig.observationsSheetId,
+    approval: next, status: '', responsibleDepartment: ''
+  });
+  if (result.success) {
+    showToast(`Approval updated to ${next}`, 'success');
+    loadMyCards();
+    if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+  } else {
+    showToast('Failed: ' + (result.error || ''), 'error');
+  }
+}
+
+async function toggleApprovalCloud(index) {
+  const cards = window._cloudCards || [];
+  const card = cards[index];
+  if (!card) return;
+  if (currentUser.role !== 'hseq') { showToast(t('hseqOnly'), 'error'); return; }
+  const current = card.Approval || 'pending';
+  const next = current === 'approved' ? 'unapproved' : 'approved';
+  const rowIndex = card._sheetRowIndex - 1;
+  const result = await apiCall('updateObservation', {
+    rowIndex, observationsSheetId: companyConfig.observationsSheetId,
+    approval: next, status: '', responsibleDepartment: ''
+  });
+  if (result.success) {
+    showToast(`Approval updated to ${next}`, 'success');
+    loadCloudCards();
+    loadMyCards();
+  } else {
+    showToast('Failed: ' + (result.error || ''), 'error');
+  }
+}
+
+// ================================================================
+// CORRECTIVE ACTION MODALS
+// ================================================================
+function openCAModalMy(index) {
+  const cards = window._myCards || [];
+  const card = cards[index];
+  if (!card || card._local) return;
+  const isHSEQ = currentUser.role === 'hseq' && currentUser.id !== '';
+  if (!isHSEQ && (!currentUser.department || !card.ResponsibleDepartment || currentUser.department !== card.ResponsibleDepartment)) {
+    showToast(t('notAuthorized'), 'error');
+    return;
+  }
+  editingRowIndex = card._sheetRowIndex - 1;
+  editingCard = card;
+  openCAModalCommon();
+}
+
+function openCAModalCloud(index) {
+  const cards = window._cloudCards || [];
+  const card = cards[index];
+  if (!card) return;
+  const isHSEQ = currentUser.role === 'hseq' && currentUser.id !== '';
+  if (!isHSEQ && (!currentUser.department || !card.ResponsibleDepartment || currentUser.department !== card.ResponsibleDepartment)) {
+    showToast(t('notAuthorized'), 'error');
+    return;
+  }
+  editingRowIndex = card._sheetRowIndex - 1;
+  editingCard = card;
+  openCAModalCommon();
+}
+
+function openCAModalCommon() {
+  $('caBy').value = currentUser.name || 'Unknown';
+  $('caDate').value = new Date().toLocaleString();
+  $('caDescription').value = '';
+  caFileBase64 = null;
+  $('caUploadPreview').innerHTML = '';
+  $('caFileInput').value = '';
+  $('caModal').classList.add('active');
+  $('caError').style.display = 'none';
+  // Reset button
+  const btn = $('caSaveBtn');
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-save"></i> ' + t('save');
+}
+
+async function saveCorrectiveAction() {
+  const btn = $('caSaveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+  try {
+    let imageUrl = '';
+    if (caFileBase64) {
+      const uploadResult = await apiCall('uploadImage', {
+        file: caFileBase64,
+        reporter: currentUser.name || 'unknown',
+        timestamp: new Date().toISOString(),
+        folderId: companyConfig.folderId
+      });
+      if (uploadResult.success) {
+        imageUrl = uploadResult.url;
+      } else {
+        $('caError').textContent = 'Image upload failed: ' + uploadResult.error;
+        $('caError').style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> ' + t('save');
+        return;
+      }
+    } else {
+      $('caError').textContent = 'Please upload an image for the corrective action.';
+      $('caError').style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> ' + t('save');
+      return;
+    }
+
+    const description = $('caDescription').value.trim();
+    const by = $('caBy').value.trim();
+    const date = $('caDate').value.trim();
+
+    const result = await apiCall('addCorrectiveAction', {
+      rowIndex: editingRowIndex,
+      observationsSheetId: companyConfig.observationsSheetId,
+      imageUrl,
+      description,
+      by,
+      date,
+      department: currentUser.department,
+      userRole: currentUser.role // pass role to skip check for HSEQ
+    });
+
+    if (result.success) {
+      showToast('Corrective action added', 'success');
+      $('caModal').classList.remove('active');
+      loadMyCards();
+      if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+    } else {
+      $('caError').textContent = result.error || 'Failed to add action';
+      $('caError').style.display = 'block';
+    }
+  } catch (err) {
+    $('caError').textContent = err.message || 'Error';
+    $('caError').style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> ' + t('save');
+  }
+}
+
+// ================================================================
+// PDF GENERATION (Flutter design)
+// ================================================================
+function generatePDF(type, index) {
+  const cards = type === 'my' ? (window._myCards || []) : (window._cloudCards || []);
+  const card = cards[index];
+  if (!card) return;
+  
+   function formatDate(d) {
+    if (!d) return 'N/A';
+    const date = new Date(d);
+    if (isNaN(date)) return d; // fallback
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  }
+
+  const logoUrl = companyConfig.logo || '';
+  const code = companyConfig.code || '';
+  const title = companyConfig.pdfTitle || 'STOP CARD';
+  // Logo HTML
+  const logoHtml = logoUrl ? `<img src="${logoUrl}" style="max-width:50px;max-height:50px;">` : '<span style="font-size:20px;">🏢</span>';
+  // Safety checks
+// Inside generatePDF, after building safetyHtml:
+let safetyHtml = '';
+if (card.SafetyChecks) {
+  try {
+    const checks = JSON.parse(card.SafetyChecks);
+    const mode = $('safetyMode') ? $('safetyMode').value : 'hse';
+    const checklists = safetyChecklists[mode] || safetyChecklists.hse;
+
+    for (const [category, items] of Object.entries(checklists)) {
+      // Category label (localized)
+      const catLabel = t(category) || category;
+      let safeCount = 0;
+      items.forEach(item => {
+        const key = category + '_' + item.en.replace(/\s/g, '_');
+        if (checks[key] !== undefined ? checks[key] : true) safeCount++;
+      });
+
+      safetyHtml += `
+        <div style="border:1px solid #e0e7ef;border-radius:4px;padding:6px;margin-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:10px;color:#3d4a5a;margin-bottom:4px;">
+            <span>${catLabel.toUpperCase()}</span>
+            <span>${safeCount}/${items.length}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+      `;
+
+      items.forEach(item => {
+        const key = category + '_' + item.en.replace(/\s/g, '_');
+        const safe = checks[key] !== undefined ? checks[key] : true;
+        const bg = safe ? '#e6f4ea' : '#fce8e8';
+        const color = safe ? '#0f9d58' : '#d32f2f';
+        const border = safe ? '#b7e1cd' : '#f5c6c6';
+        // Use localized label (Arabic if currentLang === 'ar')
+        const label = (currentLang === 'ar' && item.ar) ? item.ar : item.en;
+        safetyHtml += `
+          <span style="background:${bg};border:1px solid ${border};border-radius:12px;padding:1px 8px;font-size:8px;color:${color};display:inline-block;">
+            ${label}
+          </span>
+        `;
+      });
+
+      safetyHtml += `</div></div>`;
+    }
+  } catch(e) {
+    safetyHtml = '<p style="font-size:10px;color:#999;">No safety checks data</p>';
+  }
+} else {
+  safetyHtml = '<p style="font-size:10px;color:#999;">No safety checks</p>';
+}
+
+   // Recommendations & Target Date
+ let recHtml = '';
+if (card.Recommendation || card.recommendation) {
+  recHtml = `<p><strong>${t('recommendation')}:</strong> ${card.Recommendation || card.recommendation}</p>`;
+  const respDept = card.ResponsibleDepartment || card.respDept || '';
+  if (respDept) {
+    recHtml += `<p><strong>${t('responsibleDepartment')}:</strong> ${respDept}</p>`;
+  }
+  const targetDate = card.TargetDate || card.targetDate || '';
+  if (targetDate) {
+    recHtml += `<p><strong>${t('targetDate')}:</strong> ${formatDate(targetDate)}</p>`;
+  }
+} else {
+  recHtml = '<p style="font-size:9px;color:#999;font-style:italic;">No recommendations</p>';
+}
+// Corrective Actions
+  let caHtml = '';
+  if (card.CorrectiveActionImage || card.CorrectiveActionDescription) {
+    caHtml = `<div style="margin-top:6px;"><strong>${t('addCorrectiveAction')}</strong>
+      <div style="border:1px solid #ddd;padding:10px;border-radius:6px;margin-top:6px;">`;
+    if (card.CorrectiveActionImage) {
+      caHtml += `<p><strong>${t('photo')}:</strong> <img src="${card.CorrectiveActionImage}" style="max-width:120px;max-height:80px;"></p>`;
+    }
+    if (card.CorrectiveActionDescription) {
+      caHtml += `<p><strong>${t('description')}:</strong> ${card.CorrectiveActionDescription}</p>`;
+    }
+    if (card.CorrectiveActionBy) {
+      caHtml += `<p><strong>${t('by')}:</strong> ${card.CorrectiveActionBy}</p>`;
+    }
+    if (card.CorrectiveActionDate) {
+      caHtml += `<p><strong>${t('date')}:</strong> ${formatDate(card.CorrectiveActionDate)}</p>`;
+    }
+    caHtml += `</div></div>`;
+  } else {
+    caHtml = '<p style="font-size:9px;color:#999;font-style:italic;">No corrective actions</p>';
+  }
+
+  const content = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>${title}</title>
+<style>
+  @page { margin: 0.5in; size: A4 portrait; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin:0; padding:0; background:#fff; font-size:10px; line-height:1.4; color:#1a2332; }
+  .report { max-width:100%; margin:0 auto; }
+  .header-table { border-collapse:collapse; width:100%; border:1px solid #333; margin-bottom:6px; }
+  .header-table td { border:1px solid #333; padding:8px; vertical-align:middle; }
+  .logo-cell { text-align:center; width:20%; }
+  .title-cell { text-align:center; font-size:16px; font-weight:bold; color:#1a73e8; width:60%; }
+  .code-cell { text-align:center; font-size:12px; color:#666; width:20%; }
+  .type-pills { display:flex; justify-content:center; gap:8px; border:1px solid #e0e0e0; border-radius:4px; padding:4px; margin-bottom:6px; }
+  .pill { 
+  padding: 2px 10px; 
+  border-radius: 12px; 
+  font-size: 8px; 
+  font-weight: bold; 
+  border: 1px solid #ccc; 
+  background: #f5f5f5; 
+  color: #666; 
+}
+.pill-selected { 
+  border-width: 2px !important; 
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.15); 
+  font-weight: bold;
+    font-size: 12px; 
+      color: #666; 
+
+
+}
+  .info-table { width:100%; border-collapse:collapse; border:0.5px solid #dde2e8; font-size:8px; }
+  .info-table td { padding:4px 6px; border:0.5px solid #dde2e8; }
+  .info-label { background:#f5f8fa; font-weight:bold; color:#3d4a5a; }
+  .info-value { background:#fff; }
+  .photo-box { border:0.5px solid #dde2e8; border-radius:4px; padding:6px; margin-left:6px; text-align:center; min-height:100px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+  .photo-box img { max-width:100%; max-height:110px; object-fit:contain; }
+  .photo-label { font-size:8px; font-weight:bold; color:#1a73e8; margin-bottom:4px; }
+  .observation-block { border:0.5px solid #dde2e8; border-radius:4px; padding:6px; margin-top:6px; }
+  .observation-block .obs-label { font-size:9px; font-weight:bold; color:#1a73e8; margin-bottom:4px; }
+  .observation-block .obs-text { font-size:8px; margin:0; }
+  .safety-checks { margin-top:8px; }
+  .safety-checks .title { font-size:10px; font-weight:bold; color:#1a73e8; margin-bottom:4px; }
+  .actions-row { display:flex; gap:6px; margin-top:6px; }
+  .actions-col { flex:1; border:0.5px solid #dde2e8; border-radius:4px; padding:6px; }
+  .actions-col .col-title { font-size:8px; font-weight:bold; color:#3d4a5a; margin-bottom:4px; display:flex; align-items:center; }
+  .actions-col .col-title .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
+  .footer { margin-top:16px; border-top:0.5px solid #dde2e8; padding-top:8px; display:flex; justify-content:space-between; font-size:7px; color:#666; }
+  .footer span { font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="report">
+  <table class="header-table">
+    <tr>
+      <td class="logo-cell">${logoHtml}</td>
+      <td class="title-cell">${title}</td>
+      <td class="code-cell">${code}</td>
+    </tr>
+  </table>
+
+  <div class="type-pills">
+    ${['positive','near_miss','unsafe_act','unsafe_condition'].map(type => {
+      const labels = { positive: t('positive'), near_miss: t('nearMiss'), unsafe_act: t('unsafeAct'), unsafe_condition: t('unsafeCondition') };
+      const isSelected = (card.ObservationType || card.obsType || '').toLowerCase() === type;
+      const colors = { positive:'#0f9d58', near_miss:'#e37400', unsafe_act:'#d32f2f', unsafe_condition:'#1a73e8' };
+      return `<span class="pill ${isSelected ? 'pill-selected' : ''}" style="${isSelected ? `background:${colors[type]};border-color:${colors[type]};color:#fff;` : ''}">${labels[type] || type}</span>`;
+    }).join('')}
+  </div>
+
+  <div style="display:flex; gap:6px; margin-top:6px;">
+    <div style="flex:3;">
+      <table class="info-table">
+        <tr><td class="info-label">Reporter Name:</td><td class="info-value">${card.Reporter || card.reporter || ''}</td><td class="info-label">Job:</td><td class="info-value">${card.Job || card.job || ''}</td></tr>
+        <tr><td class="info-label">Reporter ID:</td><td class="info-value">${card.ReporterId || card.reporterId || ''}</td><td class="info-label">Dept:</td><td class="info-value">${card.ResponsibleDepartment || card.respDept || ''}</td></tr>
+        <tr><td class="info-label">Area:</td><td class="info-value">${card.Area || card.area || ''}</td><td class="info-label">Location:</td><td class="info-value">${card.Location || card.location || ''}</td></tr>
+        <tr><td class="info-label">Date:</td><td class="info-value">${formatDate(card.Timestamp || card.timestamp)}</td><td class="info-label">Time:</td><td class="info-value">${formatDate(card.Timestamp || card.timestamp).split(' ')[1] || ''}</td></tr>
+        <tr><td class="info-label">Status:</td><td class="info-value">${card.Status || card.status || ''}</td></tr>
+      </table>
+    </div>
+    <div style="flex:2;">
+      <div class="photo-box">
+        <div class="photo-label">OBSERVATION PHOTO</div>
+        ${card.ImageUrl || card.imageUrl ? `<img src="${card.ImageUrl || card.imageUrl}" alt="Photo">` : '<span style="font-size:8px;color:#999;font-style:italic;">No Photo</span>'}
+      </div>
+    </div>
+  </div>
+
+  <div class="observation-block">
+    <div class="obs-label">OBSERVATION</div>
+    <p class="obs-text">${card.Observation || card.observation || 'No description'}</p>
+  </div>
+
+  <div class="safety-checks">
+    <div class="title">${t('safetyChecks')}</div>
+    ${safetyHtml}
+  </div>
+
+  <div style="margin-top:6px;">
+    <div style="font-size:10px;font-weight:bold;color:#1a73e8;margin-bottom:4px;">IMMEDIATE ACTIONS</div>
+    <div class="actions-row">
+      <div class="actions-col"><div class="col-title"><span class="dot" style="background:#e37400;"></span> ${t('recommendation')}</div>${recHtml}</div>
+      <div class="actions-col"><div class="col-title"><span class="dot" style="background:#0f9d58;"></span> ${t('addCorrectiveAction')}</div>${caHtml}</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div><span>Received By:</span> _________________</div>
+    <div><span>Signature:</span> _________________</div>
+  </div>
+  <div style="text-align:center;font-size:7px;color:#999;margin-top:8px;">Generated by STOP Card System</div>
+</div>
+</body>
+</html>
+  `;
+
+  const win = window.open('', '_blank');
+  if (!win) { showToast('Please allow popups.', 'error'); return; }
+  win.document.write(content);
+  win.document.close();
+  win.onload = function() { setTimeout(function() { win.print(); }, 800); };
+}
+
+// ================================================================
+// CHARTS
+// ================================================================
+async function loadCharts() {
+  if (!currentUser.loggedIn || !companyConfig.observationsSheetId) {
+    ['Total','Pending','Completed','Unsafe'].forEach(id => $(`stat${id}`).textContent = '0');
+    return;
+  }
+  const result = await apiCall('getStats', { 
+    observationsSheetId: companyConfig.observationsSheetId,
+    userRole: currentUser.role
+  });
+  if (!result.success) { showToast('Failed to load stats: '+result.error, 'error'); return; }
+  const stats = result.stats || { total:0, pending:0, completed:0, unsafe:0 };
+  $('statTotal').textContent = stats.total || 0;
+  $('statPending').textContent = stats.pending || 0;
+  $('statCompleted').textContent = stats.completed || 0;
+  $('statUnsafe').textContent = stats.unsafe || 0;
+
+  renderChart('chartType', stats.byType || {}, 'Observation Types', ['#d32f2f','#e37400','#7c3aed','#0f9d58']);
+  renderChart('chartStatus', stats.byStatus || {}, 'Status', ['#e37400','#0f9d58','#1a73e8']);
+}
+
+function renderChart(canvasId, dataObj, label, colors) {
+  const canvas = $(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); chartInstances[canvasId] = null; }
+  const labels = Object.keys(dataObj);
+  const values = Object.values(dataObj);
+  if (labels.length===0) return;
+  const defaultColors = ['#1a73e8','#0f9d58','#e37400','#d32f2f','#7c3aed','#00bcd4'];
+  const bgColors = labels.map((_,i) => colors?.[i] || defaultColors[i%defaultColors.length]);
+  chartInstances[canvasId] = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: bgColors, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth:12, padding:12, font:{size:11} } } }, cutout:'65%' }
+  });
+}
+
+// ================================================================
+// HELPERS
+// ================================================================
+function getStatusBadge(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'completed') return `<span class="badge badge-green">${t('completed')}</span>`;
+  if (s === 'in progress') return `<span class="badge badge-blue">${t('inProgress')}</span>`;
+  return `<span class="badge badge-orange">${t('pending')}</span>`;
+}
+
+function getTypeBadge(type) {
+  const typeLower = (type || '').toLowerCase();
+  if (typeLower === 'unsafe_condition') return `<span class="badge badge-red">${t('unsafeCondition')}</span>`;
+  if (typeLower === 'unsafe_act') return `<span class="badge badge-orange">${t('unsafeAct')}</span>`;
+  if (typeLower === 'near_miss') return `<span class="badge badge-purple">${t('nearMiss')}</span>`;
+  if (typeLower === 'positive') return `<span class="badge badge-green">${t('positive')}</span>`;
+  return `<span class="badge badge-blue">${type || 'N/A'}</span>`;
+}
+function escHtml(str) { if (!str) return ''; const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
+
+// ================================================================
+// TAB SWITCHING
+// ================================================================
+function switchTab(tab) {
+  qsa('.tabs .tab').forEach(el => el.classList.remove('active'));
+  const tabBtn = document.querySelector(`.tabs .tab[data-tab="${tab}"]`);
+  if (tabBtn) tabBtn.classList.add('active');
+  qsa('.panel').forEach(el => el.classList.remove('active'));
+  const panel = $(`panel-${tab}`);
+  if (panel) panel.classList.add('active');
+  if (tab === 'mycards') loadMyCards();
+  if (tab === 'charts') loadCharts();
+  if (tab === 'cloud') loadCloudCards();
+}
+
+function populateCompanyDropdowns() {
+  const areaList = document.getElementById('areaList');
+  const locationList = document.getElementById('locationList');
+  
+  // Clear existing options
+  areaList.innerHTML = '';
+  locationList.innerHTML = '';
+
+  // Populate from companyConfig (if available)
+  if (companyConfig.areas && companyConfig.areas.length) {
+    companyConfig.areas.forEach(area => {
+      const opt = document.createElement('option');
+      opt.value = area;
+      areaList.appendChild(opt);
+    });
+  }
+  if (companyConfig.sites && companyConfig.sites.length) {
+    companyConfig.sites.forEach(site => {
+      const opt = document.createElement('option');
+      opt.value = site;
+      locationList.appendChild(opt);
+    });
+  }
+}
+async function deleteCloudCard(index) {
+  const cards = window._cloudCards || [];
+  const card = cards[index];
+  if (!card) return;
+  if (!confirm('Are you sure you want to delete this observation? This action cannot be undone.')) return;
+
+  const rowIndex = card._sheetRowIndex - 1; // because rowIndex is 1‑based in backend
+  const result = await apiCall('deleteObservation', {
+    rowIndex: rowIndex,
+    observationsSheetId: companyConfig.observationsSheetId,
+    userRole: currentUser.role  // to enforce HSEQ on server side
+  });
+
+  if (result.success) {
+    showToast('Card deleted successfully', 'success');
+    // Refresh both cloud and my cards
+    loadCloudCards();
+    loadMyCards();
+    loadCharts();
+  } else {
+    showToast('Delete failed: ' + (result.error || ''), 'error');
+  }
+}
+function deleteLocalCard(localIndex) {
+  if (localIndex === undefined || localIndex === null) {
+    showToast('Invalid card index', 'error');
+    return;
+  }
+  if (!confirm('Are you sure you want to delete this local card? This action cannot be undone.')) {
+    return;
+  }
+
+  // Remove from pendingCards array
+  pendingCards.splice(localIndex, 1);
+  // Update localStorage
+  localStorage.setItem('pendingCards', JSON.stringify(pendingCards));
+  // Update UI
+  updatePendingUI();
+  // Refresh the My Cards list
+  loadMyCards();
+  // Also refresh charts (they might count local cards if shown)
+  // but charts currently only count cloud cards. If you want local stats, you could update, but not needed.
+  showToast('Local card deleted', 'success');
+}
+
+// ================================================================
+// QR CODE FUNCTIONS
+// ================================================================
+
+async function generateQRCode() {
+  if (currentUser.role !== 'hseq') {
+    showToast('Only HSEQ users can generate QR codes', 'error');
+    return;
+  }
+  const companyId = currentUser.companyId;
+  if (!companyId) {
+    showToast('No company logged in', 'error');
+    return;
+  }
+  showToast('Fetching QR token...', 'info');
+  const result = await apiCall('generateToken', {
+    companyId: companyId,
+    userRole: currentUser.role
+  });
+  if (!result.success) {
+    showToast('Failed to get token: ' + result.error, 'error');
+    return;
+  }
+  const token = result.token;
+  // Build URL: current page URL without any existing parameters
+  const baseUrl = window.location.href.split('?')[0];
+  const urlWithToken = baseUrl + '?token=' + encodeURIComponent(token);
+  
+  // Clear previous QR
+  const container = document.getElementById('qrCodeContainer');
+  container.innerHTML = '';
+  
+  // Generate QR code
+  new QRCode(container, {
+    text: urlWithToken,
+    width: 250,
+    height: 250,
+    colorDark: '#1a73e8',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+  
+  document.getElementById('qrUrlDisplay').textContent = urlWithToken;
+  window._qrUrl = urlWithToken;
+  document.getElementById('qrModal').classList.add('active');
+}
+
+async function regenerateQR() {
+  if (currentUser.role !== 'hseq') {
+    showToast('Only HSEQ users can regenerate', 'error');
+    return;
+  }
+  if (!confirm('Regenerating the token will invalidate any previously generated QR codes. Continue?')) return;
+  
+  const result = await apiCall('regenerateToken', {
+    companyId: currentUser.companyId,
+    userRole: currentUser.role
+  });
+  if (!result.success) {
+    showToast('Failed to regenerate: ' + result.error, 'error');
+    return;
+  }
+  showToast('Token regenerated. QR updated.', 'success');
+  // Refresh the QR display with the new token
+  await generateQRCode();
+}
+
+function downloadQR() {
+  const container = document.getElementById('qrCodeContainer');
+  const img = container.querySelector('img');
+  if (!img) {
+    showToast('No QR code to download', 'error');
+    return;
+  }
+  const link = document.createElement('a');
+  link.download = 'qr_login.png';
+  link.href = img.src;
+  link.click();
+}
+
+// ================================================================
+// AUTO‑LOGIN VIA QR TOKEN ON PAGE LOAD
+// ================================================================
+
+async function handleTokenLogin() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  if (!token) return;
+  
+  showToast('Auto‑login via QR token...', 'info', 5000);
+  
+  const result = await apiCall('loginWithToken', { token });
+  if (result.success) {
+    // Apply the same login logic as companyLogin
+    currentUser = {
+      name: result.companyName || result.companyId,
+      id: result.companyId,
+      loggedIn: true,
+      role: 'admin',
+      companyId: result.companyId,
+      companyName: result.companyName || result.companyId,
+      department: ''
+    };
+    companyConfig = {
+      folderId: result.folderId || '',
+      observationsSheetId: result.observationsSheetId || '',
+      workersSheetId: result.workersSheetId || '',
+      code: result.code || '',
+      logo: result.logo || '',
+      pdfTitle: result.pdfTitle || 'STOP Card System',
+      sites: result.sites || [],
+      areas: result.areas || []
+    };
+    document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escHtml(currentUser.name)}`;
+    document.getElementById('loginBtn').innerHTML = `<i class="fas fa-sign-out-alt"></i> ${t('logout')}`;
+    document.getElementById('workerLoginBtn').style.display = 'inline-block';
+    document.getElementById('syncBtn').style.display = 'inline-block';
+    document.getElementById('appTitle').textContent = companyConfig.pdfTitle;
+    document.getElementById('qrBtn').style.display = 'inline-block';
+    showToast(`Auto‑login successful! Welcome ${currentUser.name}`, 'success');
+    await loadWorkers();
+    populateCompanyDropdowns();
+    loadMyCards();
+    loadCharts();
+    if (document.getElementById('panel-cloud').classList.contains('active')) loadCloudCards();
+    // Remove token from URL to avoid re‑login on refresh
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else {
+    showToast('Auto‑login failed: ' + result.error, 'error');
+  }
+}
+// ================================================================
+// INIT
+// ================================================================
+function init() {
+  updateLocalization();
+  const d = new Date(); d.setDate(d.getDate()+30);
+  if ($('targetDate')) $('targetDate').value = d.toISOString().split('T')[0];
+  renderSafetyChecks('hse');
+  updatePendingUI();
+  loadMyCards();
+  handleTokenLogin();
+  if (currentUser.loggedIn) {
+    loadCharts();
+    if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+  }
+  console.log('STOP Card System ready.');
+}
+document.addEventListener('DOMContentLoaded', init);
+
+// Expose globals
+window.showCompanyLogin = showCompanyLogin;
+window.companyLogin = companyLogin;
+window.showWorkerLogin = showWorkerLogin;
+window.workerLogin = workerLogin;
+window.switchTab = switchTab;
+window.submitStopCard = submitStopCard;
+window.handleFileSelect = handleFileSelect;
+window.removeFile = removeFile;
+window.handleCAFileSelect = handleCAFileSelect;
+window.removeCAFile = removeCAFile;
+window.loadMyCards = loadMyCards;
+window.loadCharts = loadCharts;
+window.loadCloudCards = loadCloudCards;
+window.toggleSafetyChecks = toggleSafetyChecks;
+window.safetyCheckChanged = safetyCheckChanged;
+window.generatePDF = generatePDF;
+window.openFullEditModalCloud = openFullEditModalCloud;
+window.saveFullEditCloud = saveFullEditCloud;
+window.openFullEditModalMy = openFullEditModalMy;
+window.saveFullEditMy = saveFullEditMy;
+window.openCAModalMy = openCAModalMy;
+window.openCAModalCloud = openCAModalCloud;
+window.saveCorrectiveAction = saveCorrectiveAction;
+window.syncPendingCards = syncPendingCards;
+window.uploadSingleCard = uploadSingleCard;
+window.openLocalEditModal = openLocalEditModal;
+window.saveLocalEdit = saveLocalEdit;
+window.toggleApprovalMy = toggleApprovalMy;
+window.toggleApprovalCloud = toggleApprovalCloud;
+window.closeModal = closeModal;
+window.t = t;
+</script>
+</body>
+</html>
