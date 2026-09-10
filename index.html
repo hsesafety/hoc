@@ -382,33 +382,125 @@
   </div>
 
   <!-- CHARTS PANEL -->
-  <div class="panel" id="panel-charts">
-    <div class="card"><div class="card-title"><i class="fas fa-chart-pie"></i> <span data-i18n="charts">Statistics &amp; Charts</span></div>
-      <div class="stats-grid" id="statsGrid">
-        <div class="stat-box"><div class="number" id="statTotal">0</div><div class="label" data-i18n="totalCards">Total Cards</div></div>
-        <div class="stat-box"><div class="number" id="statPending">0</div><div class="label" data-i18n="pending">Pending</div></div>
-        <div class="stat-box"><div class="number" id="statCompleted">0</div><div class="label" data-i18n="completed">Completed</div></div>
-        <div class="stat-box"><div class="number" id="statUnsafe">0</div><div class="label" data-i18n="unsafeConditions">Unsafe Conditions</div></div>
-      </div>
-      <div class="chart-grid">
-        <div><h4 data-i18n="byObservationType">By Observation Type</h4><div class="chart-container"><canvas id="chartType"></canvas></div></div>
-        <div><h4 data-i18n="byStatus">By Status</h4><div class="chart-container"><canvas id="chartStatus"></canvas></div></div>
-      </div>
+ <div class="panel" id="panel-charts">
+  <div class="card">
+    <div class="card-title"><i class="fas fa-chart-pie"></i> <span data-i18n="charts">Statistics &amp; Charts</span></div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-box"><div class="number" id="statTotal">0</div><div class="label" data-i18n="totalCards">Total Cards</div></div>
+      <div class="stat-box"><div class="number" id="statPending">0</div><div class="label" data-i18n="pending">Pending</div></div>
+      <div class="stat-box"><div class="number" id="statCompleted">0</div><div class="label" data-i18n="completed">Completed</div></div>
+      <div class="stat-box"><div class="number" id="statUnsafe">0</div><div class="label" data-i18n="unsafeConditions">Unsafe Conditions</div></div>
     </div>
-  </div>
 
-  <!-- ALL CARDS (CLOUD) PANEL -->
-  <div class="panel" id="panel-cloud">
-<div class="card-title">
-  <i class="fas fa-cloud"></i> <span data-i18n="allCards">All Cards</span>
-  <span style="margin-left:auto; font-size:13px; font-weight:400; color:#8896a8;" id="cloudCount"></span>
-  <button id="exportBtn" class="btn btn-sm btn-success" style="display:none; margin-left:10px;" onclick="exportToExcel('cloud')">
-    <i class="fas fa-file-excel"></i> Export Excel
-  </button>
-</div>
-      <div id="cloudContainer"><div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i><br><span data-i18n="loading">Loading...</span></div></div>
+    <div class="chart-grid">
+      <div><h4 data-i18n="byObservationType">By Observation Type</h4><div class="chart-container"><canvas id="chartType"></canvas></div></div>
+      <div><h4 data-i18n="byStatus">By Status</h4><div class="chart-container"><canvas id="chartStatus"></canvas></div></div>
+    </div>
+
+    <div class="chart-grid" style="margin-top:24px;">
+      <div><h4>By Area</h4><div class="chart-container"><canvas id="chartArea"></canvas></div></div>
+      <div><h4>By Location</h4><div class="chart-container"><canvas id="chartLocation"></canvas></div></div>
+    </div>
+
+    <div class="chart-grid" style="margin-top:24px;">
+      <div><h4>By Responsible Department</h4><div class="chart-container"><canvas id="chartDept"></canvas></div></div>
+      <div><h4>By Approval</h4><div class="chart-container"><canvas id="chartApproval"></canvas></div></div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <h4>Monthly Trend (last 6 months)</h4>
+      <div class="chart-container" style="height:280px;"><canvas id="chartMonthly"></canvas></div>
     </div>
   </div>
+</div>
+
+<div class="panel" id="panel-cloud">
+  <div class="card">
+    <div class="card-title">
+      <i class="fas fa-cloud"></i> <span data-i18n="allCards">All Cards</span>
+      <span style="margin-left:auto; font-size:13px; font-weight:400; color:#8896a8;" id="cloudCount"></span>
+      <button id="exportBtn" class="btn btn-sm btn-success" style="display:none; margin-left:10px;" onclick="exportToExcel('cloud')">
+        <i class="fas fa-file-excel"></i> Export Excel
+      </button>
+    </div>
+
+  <!-- Filter toggle button -->
+<div style="margin-bottom:12px;">
+  <button class="btn btn-sm btn-outline" id="cloudFilterToggle" onclick="toggleCloudFilterBar()">
+    <i class="fas fa-filter"></i> Filters <i class="fas fa-chevron-down" id="cloudFilterChevron"></i>
+  </button>
+  <span id="cloudActiveFilterCount" style="font-size:12px; color:#1a73e8; margin-left:8px; font-weight:600;"></span>
+</div>
+
+<!-- Filter bar (default hidden) -->
+<div id="cloudFilterBar" style="display:none; border:1px solid #e0e7ef; border-radius:12px; padding:16px; margin-bottom:16px; background:#f8faff;">
+  <div class="form-row three" style="margin-bottom:12px;">
+    <div class="form-group">
+      <label>Search</label>
+      <input type="text" id="cloudSearch" placeholder="Search observation, reporter...">
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="cloudFilterStatus">
+        <option value="">All</option>
+        <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Completed">Completed</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Observation Type</label>
+      <select id="cloudFilterType">
+        <option value="">All</option>
+        <option value="unsafe_condition">Unsafe Condition</option>
+        <option value="unsafe_act">Unsafe Act</option>
+        <option value="near_miss">Near Miss</option>
+        <option value="positive">Positive Observation</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-row three" style="margin-bottom:12px;">
+    <div class="form-group">
+      <label>Area</label>
+      <select id="cloudFilterArea"><option value="">All</option></select>
+    </div>
+    <div class="form-group">
+      <label>Location</label>
+      <select id="cloudFilterLocation"><option value="">All</option></select>
+    </div>
+    <div class="form-group">
+      <label>Approval</label>
+      <select id="cloudFilterApproval">
+        <option value="">All</option>
+        <option value="approved">Approved</option>
+        <option value="pending">Pending</option>
+        <option value="unapproved">Unapproved</option>
+      </select>
+    </div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button class="btn btn-sm btn-primary" onclick="applyCloudFilters()"><i class="fas fa-filter"></i> Apply Filters</button>
+    <button class="btn btn-sm btn-outline" onclick="resetCloudFilters()"><i class="fas fa-times"></i> Reset</button>
+  </div>
+</div>
+    <div id="cloudContainer">
+      <div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i><br><span data-i18n="loading">Loading...</span></div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="cloudPagination" style="display:none; margin-top:16px; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-sm btn-outline" id="cloudPrevBtn" onclick="cloudPrevPage()"><i class="fas fa-chevron-left"></i> Prev</button>
+      <span id="cloudPageInfo" style="font-size:13px; color:#5f6b7a;"></span>
+      <button class="btn btn-sm btn-outline" id="cloudNextBtn" onclick="cloudNextPage()">Next <i class="fas fa-chevron-right"></i></button>
+      <select id="cloudPageSize" onchange="changeCloudPageSize(this.value)" style="padding:6px 10px; border-radius:8px; border:1.5px solid #dde2e8;">
+        <option value="10">10 / page</option>
+        <option value="20">20 / page</option>
+        <option value="50">50 / page</option>
+        <option value="100">100 / page</option>
+      </select>
+    </div>
+  </div>
+</div>
 
 </div>
 
@@ -672,7 +764,8 @@ function showCompanyLogin() {
     const titleEl = document.getElementById('appTitle');
     if (titleEl) titleEl.textContent = 'STOP Card System';
     showToast('Logged out', 'info');
-    loadMyCards(); loadCharts();
+    loadMyCards(); loadCharts();  clearSession();   // <-- ADD THIS LINE
+
     if ($('panel-cloud').classList.contains('active')) loadCloudCards();
     return;
   }
@@ -712,6 +805,7 @@ async function companyLogin() {
   areas: result.areas || []  
     };
     populateCompanyDropdowns();
+saveSession();   // <-- ADD THIS LINE
 
     $('companyLoginModal').classList.remove('active');
     $('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escHtml(currentUser.name)}`;
@@ -775,6 +869,8 @@ async function workerLogin() {
     $('jobTitle').value = currentUser.job || '';
     $('department').value = currentUser.department || '';
     loadMyCards();
+    saveSession();   // <-- ADD THIS LINE
+
     if ($('panel-cloud').classList.contains('active')) loadCloudCards();
     // Show export button for HSEQ
 const isHSEQ = currentUser.role === 'hseq';
@@ -791,40 +887,105 @@ document.getElementById('exportMyBtn').style.display = isHSEQ ? 'inline-block' :
 // ================================================================
 // LOAD WORKERS
 // ================================================================
+// ================================================================
+// WORKERS LOADING & AUTO-FILL (REVISED)
+// ================================================================
+
+let workerMap = new Map(); // ID -> worker object
+
 async function loadWorkers() {
-  if (!companyConfig.workersSheetId) return;
+  if (!companyConfig.workersSheetId) {
+    console.warn('No workers sheet ID – skipping loadWorkers');
+    return;
+  }
   const result = await apiCall('getWorkers', { workerSheetId: companyConfig.workersSheetId });
   if (result.success && result.workers) {
     workersList = result.workers;
+    workerMap = new Map();
     const datalist = $('workerSuggestions');
     datalist.innerHTML = '';
     workersList.forEach(w => {
+      const id = (w.id || w.workerId || '').toString().trim();
+      if (!id) return;
+      workerMap.set(id, w);
       const opt = document.createElement('option');
-      opt.value = w.id;
-      opt.dataset.name = w.name;
-      opt.dataset.job = w.job;
+      opt.value = id;
       datalist.appendChild(opt);
     });
+    console.log(`Loaded ${workerMap.size} workers into map.`);
+  } else {
+    console.warn('Failed to load workers:', result.error);
   }
 }
 
-$('reporterId').addEventListener('input', function() {
-  const id = this.value.trim();
-  const worker = workersList.find(w => w.id === id);
+function fillWorkerFields(id) {
+  if (!id) {
+    console.log('fillWorkerFields called with empty ID');
+    return;
+  }
+  const trimmed = id.toString().trim();
+  // If workerMap is empty, try to reload workers (maybe they weren't loaded yet)
+  if (workerMap.size === 0) {
+    console.warn('Worker map is empty – attempting to reload workers...');
+    loadWorkers().then(() => {
+      // After reload, try again
+      const worker = workerMap.get(trimmed);
+      if (worker) applyWorkerData(worker);
+    });
+    return;
+  }
+  const worker = workerMap.get(trimmed);
   if (worker) {
-    // Auto-fill but allow manual override (don't overwrite if user has typed)
-    if (!$('reporterName').value || $('reporterName').value === '') {
-      $('reporterName').value = worker.name;
-    }
-    if (!$('jobTitle').value || $('jobTitle').value === '') {
-      $('jobTitle').value = worker.job || '';
-    }
-    if (!$('department').value || $('department').value === '') {
-      $('department').value = worker.department || '';
+    applyWorkerData(worker);
+  } else {
+    console.log(`No worker found for ID: "${trimmed}"`);
+    // Optional: try to find by other keys (case‑insensitive)
+    for (const [key, w] of workerMap) {
+      if (key.toLowerCase() === trimmed.toLowerCase()) {
+        applyWorkerData(w);
+        return;
+      }
     }
   }
+}
+
+function applyWorkerData(worker) {
+  console.log('Filling fields with worker:', worker);
+  $('reporterName').value = worker.name || worker.fullName || '';
+  $('jobTitle').value = worker.job || worker.jobTitle || '';
+  $('department').value = worker.department || worker.dept || '';
+}
+
+// ----- Attach event listeners to reporterId -----
+const reporterIdInput = $('reporterId');
+// Remove any previous listeners (to avoid duplicates)
+const newInput = reporterIdInput.cloneNode(true);
+reporterIdInput.parentNode.replaceChild(newInput, reporterIdInput);
+const freshInput = $('reporterId');
+
+// Use a single handler that calls fillWorkerFields
+function handleReporterIdChange() {
+  const id = this.value.trim();
+  if (id) fillWorkerFields(id);
+}
+
+freshInput.addEventListener('input', handleReporterIdChange);
+freshInput.addEventListener('change', handleReporterIdChange);
+freshInput.addEventListener('blur', handleReporterIdChange);
+freshInput.addEventListener('focus', function() {
+  // Also fill if there's a value when the field gets focus
+  const id = this.value.trim();
+  if (id) fillWorkerFields(id);
+});
+freshInput.addEventListener('paste', function() {
+  // Delay to let the pasted value appear
+  setTimeout(() => {
+    const id = this.value.trim();
+    if (id) fillWorkerFields(id);
+  }, 50);
 });
 
+console.log('Reporter ID auto-fill listeners attached.');
 // ================================================================
 // FILE UPLOAD (main)
 // ================================================================
@@ -1277,11 +1438,20 @@ ${isHSEQ ? `<button class="btn btn-sm btn-danger" onclick="deleteCloudCard(${ind
 // ================================================================
 // CLOUD CARDS LOAD
 // ================================================================
+// ================================================================
+// CLOUD CARDS – LOAD / FILTER / PAGINATE
+// ================================================================
+let cloudFilteredCards = [];
+let cloudCurrentPage = 1;
+let cloudPageSize = 10;
+
 async function loadCloudCards() {
   const container = $('cloudContainer');
   container.innerHTML = `<div class="loading-overlay"><i class="fas fa-spinner fa-spin"></i><br>${t('loading')}</div>`;
   if (!currentUser.loggedIn || !companyConfig.observationsSheetId) {
     container.innerHTML = `<div class="text-center text-muted"><i class="fas fa-cloud-upload-alt"></i> ${t('loginRequired')}</div>`;
+    $('cloudFilterBar').style.display = 'none';
+    $('cloudPagination').style.display = 'none';
     return;
   }
   try {
@@ -1294,16 +1464,101 @@ async function loadCloudCards() {
         c._sheetRowIndex = idx + 2;
         return c;
       });
-      $('cloudCount').textContent = `${cloudCards.length} cards`;
-      renderCloudCards(container, cloudCards);
+
+      // DEFAULT SORT: most recent first
+      cloudCards.sort((a, b) => {
+        const ta = new Date(a.Timestamp || a.timestamp || 0).getTime() || 0;
+        const tb = new Date(b.Timestamp || b.timestamp || 0).getTime() || 0;
+        return tb - ta;
+      });
+
+      populateCloudFilterDropdowns();
+      $('cloudFilterBar').style.display = 'block';
+      cloudCurrentPage = 1;
+      renderCloudCardsPage();
     } else {
       container.innerHTML = `<div class="text-center text-muted"><i class="fas fa-exclamation-circle"></i> ${result.error||'No data available'}</div>`;
+      $('cloudFilterBar').style.display = 'none';
+      $('cloudPagination').style.display = 'none';
     }
   } catch (err) {
     container.innerHTML = `<div class="text-center text-muted"><i class="fas fa-bug"></i> Error: ${err.message}</div>`;
   }
 }
 
+function populateCloudFilterDropdowns() {
+  const areas = [...new Set(cloudCards.map(c => c.Area).filter(Boolean))].sort();
+  const locations = [...new Set(cloudCards.map(c => c.Location).filter(Boolean))].sort();
+  const areaSel = $('cloudFilterArea');
+  const locSel = $('cloudFilterLocation');
+  const curA = areaSel.value, curL = locSel.value;
+  areaSel.innerHTML = '<option value="">All</option>' + areas.map(a => `<option value="${escHtml(a)}">${escHtml(a)}</option>`).join('');
+  locSel.innerHTML = '<option value="">All</option>' + locations.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
+  areaSel.value = curA;
+  locSel.value = curL;
+}
+
+function getFilteredCloudCards() {
+  const search = ($('cloudSearch')?.value || '').toLowerCase().trim();
+  const status = $('cloudFilterStatus')?.value || '';
+  const type = $('cloudFilterType')?.value || '';
+  const area = $('cloudFilterArea')?.value || '';
+  const location = $('cloudFilterLocation')?.value || '';
+  const approval = $('cloudFilterApproval')?.value || '';
+
+  return cloudCards.filter(card => {
+    if (search) {
+      const hay = ((card.Observation || '') + ' ' + (card.Reporter || '') + ' ' + (card.ReporterId || '')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    if (status && (card.Status || '') !== status) return false;
+    if (type && (card.ObservationType || '') !== type) return false;
+    if (area && (card.Area || '') !== area) return false;
+    if (location && (card.Location || '') !== location) return false;
+    if (approval && (card.Approval || 'pending') !== approval) return false;
+    return true;
+  });
+}
+
+function applyCloudFilters() { cloudCurrentPage = 1; renderCloudCardsPage(); }
+
+function resetCloudFilters() {
+  ['cloudSearch','cloudFilterStatus','cloudFilterType','cloudFilterArea','cloudFilterLocation','cloudFilterApproval'].forEach(id => {
+    const el = $(id); if (el) el.value = '';
+  });
+  cloudCurrentPage = 1;
+  renderCloudCardsPage();
+}
+
+function cloudPrevPage() {
+  if (cloudCurrentPage > 1) { cloudCurrentPage--; renderCloudCardsPage(); }
+}
+function cloudNextPage() {
+  const total = Math.ceil(cloudFilteredCards.length / cloudPageSize);
+  if (cloudCurrentPage < total) { cloudCurrentPage++; renderCloudCardsPage(); }
+}
+function changeCloudPageSize(v) { cloudPageSize = parseInt(v); cloudCurrentPage = 1; renderCloudCardsPage(); }
+
+function renderCloudCardsPage() {
+  cloudFilteredCards = getFilteredCloudCards();
+  const container = $('cloudContainer');
+  const total = cloudFilteredCards.length;
+  const totalPages = Math.max(1, Math.ceil(total / cloudPageSize));
+  if (cloudCurrentPage > totalPages) cloudCurrentPage = totalPages;
+
+  const start = (cloudCurrentPage - 1) * cloudPageSize;
+  const pageCards = cloudFilteredCards.slice(start, start + cloudPageSize);
+
+  if (total === 0) {
+    container.innerHTML = `<div class="text-center text-muted" style="padding:30px 0;"><i class="fas fa-inbox" style="font-size:40px;display:block;margin-bottom:12px;"></i>${t('noCards')}</div>`;
+    $('cloudPagination').style.display = 'none';
+  } else {
+    renderCloudCards(container, pageCards);
+    $('cloudPagination').style.display = 'flex';
+    $('cloudPageInfo').textContent = `Page ${cloudCurrentPage} / ${totalPages} (${total} cards)`;
+  }
+  $('cloudCount').textContent = `${total} / ${cloudCards.length} cards`;
+}
 // ================================================================
 // FULL EDIT MODAL – CLOUD
 // ================================================================
@@ -1673,7 +1928,7 @@ function openCAModalCloud(index) {
 
 function openCAModalCommon() {
   $('caBy').value = currentUser.name || 'Unknown';
-  $('caDate').value = new Date().toLocaleString();
+$('caDate').value = formatSimpleDateTime(new Date());
   $('caDescription').value = '';
   caFileBase64 = null;
   $('caUploadPreview').innerHTML = '';
@@ -1847,7 +2102,7 @@ if (card.Recommendation || card.recommendation) {
     caHtml = `<div style="margin-top:6px;"><strong>${t('addCorrectiveAction')}</strong>
       <div style="border:1px solid #ddd;padding:10px;border-radius:6px;margin-top:6px;">`;
     if (card.CorrectiveActionImage) {
-      caHtml += `<p><strong>${t('photo')}:</strong> <img src="${card.CorrectiveActionImage}" style="max-width:120px;max-height:80px;"></p>`;
+      caHtml += `<img src="${card.CorrectiveActionImage}" style="max-width:120px;max-height:80px;"></p>`;
     }
     if (card.CorrectiveActionDescription) {
       caHtml += `<p><strong>${t('description')}:</strong> ${card.CorrectiveActionDescription}</p>`;
@@ -1856,8 +2111,7 @@ if (card.Recommendation || card.recommendation) {
       caHtml += `<p><strong>${t('by')}:</strong> ${card.CorrectiveActionBy}</p>`;
     }
     if (card.CorrectiveActionDate) {
-      caHtml += `<p><strong>${t('date')}:</strong> ${formatDate(card.CorrectiveActionDate)}</p>`;
-    }
+caHtml += `<p><strong>${t('date')}:</strong> ${formatSimpleDateTime(card.CorrectiveActionDate)}</p>`;    }
     caHtml += `</div></div>`;
   } else {
     caHtml = '<p style="font-size:9px;color:#999;font-style:italic;">No corrective actions</p>';
@@ -1990,24 +2244,107 @@ if (card.Recommendation || card.recommendation) {
 // ================================================================
 // CHARTS
 // ================================================================
+// ================================================================
+// CHARTS
+// ================================================================
 async function loadCharts() {
   if (!currentUser.loggedIn || !companyConfig.observationsSheetId) {
     ['Total','Pending','Completed','Unsafe'].forEach(id => $(`stat${id}`).textContent = '0');
     return;
   }
-  const result = await apiCall('getStats', { 
+  const result = await apiCall('getAllCards', {
     observationsSheetId: companyConfig.observationsSheetId,
     userRole: currentUser.role
   });
-  if (!result.success) { showToast('Failed to load stats: '+result.error, 'error'); return; }
-  const stats = result.stats || { total:0, pending:0, completed:0, unsafe:0 };
-  $('statTotal').textContent = stats.total || 0;
-  $('statPending').textContent = stats.pending || 0;
-  $('statCompleted').textContent = stats.completed || 0;
-  $('statUnsafe').textContent = stats.unsafe || 0;
+  if (!result.success || !result.cards) { showToast('Failed to load charts data', 'error'); return; }
+  const cards = result.cards;
 
-  renderChart('chartType', stats.byType || {}, 'Observation Types', ['#d32f2f','#e37400','#7c3aed','#0f9d58']);
-  renderChart('chartStatus', stats.byStatus || {}, 'Status', ['#e37400','#0f9d58','#1a73e8']);
+  $('statTotal').textContent = cards.length;
+  $('statPending').textContent = cards.filter(c => (c.Status||'').toLowerCase()==='pending').length;
+  $('statCompleted').textContent = cards.filter(c => (c.Status||'').toLowerCase()==='completed').length;
+  $('statUnsafe').textContent = cards.filter(c => (c.ObservationType||'').toLowerCase()==='unsafe_condition').length;
+
+  const groupBy = (arr, keyFn) => arr.reduce((acc, c) => {
+    const k = keyFn(c) || 'Unknown';
+    acc[k] = (acc[k] || 0) + 1;
+    return acc;
+  }, {});
+
+  const byType = groupBy(cards, c => c.ObservationType);
+  const byStatus = groupBy(cards, c => c.Status);
+  const byArea = groupBy(cards, c => c.Area);
+  const byLocation = groupBy(cards, c => c.Location);
+  const byDept = groupBy(cards, c => c.ResponsibleDepartment || c.Department);
+  const byApproval = groupBy(cards, c => c.Approval || 'pending');
+
+  // Monthly trend (last 6 months)
+  const monthly = {};
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const label = d.toLocaleString('en', { month: 'short', year: 'numeric' });
+    monthly[label] = 0;
+  }
+  cards.forEach(c => {
+    const ts = c.Timestamp || c.timestamp;
+    if (!ts) return;
+    const d = new Date(ts);
+    if (isNaN(d)) return;
+    const label = d.toLocaleString('en', { month: 'short', year: 'numeric' });
+    if (label in monthly) monthly[label]++;
+  });
+
+  renderChart('chartType', byType, 'Observation Types', ['#d32f2f','#e37400','#7c3aed','#0f9d58'], 'doughnut');
+  renderChart('chartStatus', byStatus, 'Status', ['#e37400','#0f9d58','#1a73e8'], 'pie');
+  renderChart('chartArea', byArea, 'By Area', null, 'bar');
+  renderChart('chartLocation', byLocation, 'By Location', null, 'bar');
+  renderChart('chartDept', byDept, 'By Responsible Department', null, 'doughnut');
+  renderChart('chartApproval', byApproval, 'By Approval', ['#0f9d58','#e37400','#d32f2f'], 'pie');
+  renderChart('chartMonthly', monthly, 'Monthly Trend', ['#1a73e8'], 'line');
+}
+
+function renderChart(canvasId, dataObj, label, colors, chartType = 'doughnut') {
+  const canvas = $(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); chartInstances[canvasId] = null; }
+  const labels = Object.keys(dataObj);
+  const values = Object.values(dataObj);
+  if (labels.length === 0) return;
+
+  const defaultColors = ['#1a73e8','#0f9d58','#e37400','#d32f2f','#7c3aed','#00bcd4','#ff6f00','#3949ab','#8e24aa','#00acc1'];
+  const bgColors = labels.map((_, i) => colors?.[i] || defaultColors[i % defaultColors.length]);
+
+  const isPieLike = ['doughnut','pie','polarArea'].includes(chartType);
+  const isLine = chartType === 'line';
+  const isBar = chartType === 'bar';
+
+  const dataset = {
+    label,
+    data: values,
+    backgroundColor: isLine ? 'rgba(26,115,232,0.15)' : bgColors,
+    borderColor: isLine ? '#1a73e8' : (isPieLike ? '#fff' : bgColors),
+    borderWidth: isLine ? 2 : (isPieLike ? 2 : 1),
+    fill: isLine,
+    tension: 0.3,
+    borderRadius: isBar ? 6 : 0,
+  };
+
+  chartInstances[canvasId] = new Chart(ctx, {
+    type: chartType,
+    data: { labels, datasets: [dataset] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: isPieLike, position: 'bottom', labels: { boxWidth: 12, padding: 8, font: { size: 11 } } }
+      },
+      scales: isPieLike ? {} : {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+        x: { ticks: { autoSkip: false, font: { size: 10 } } }
+      }
+    }
+  });
 }
 
 function renderChart(canvasId, dataObj, label, colors) {
@@ -2255,6 +2592,8 @@ async function handleTokenLogin() {
     populateCompanyDropdowns();
     loadMyCards();
     loadCharts();
+    saveSession();   // <-- ADD THIS LINE
+
     if (document.getElementById('panel-cloud').classList.contains('active')) loadCloudCards();
     // Remove token from URL to avoid re‑login on refresh
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -2262,21 +2601,142 @@ async function handleTokenLogin() {
     showToast('Auto‑login failed: ' + result.error, 'error');
   }
 }
+
+// ================================================================
+// SIMPLE DATE/TIME FORMATTER  →  "9-10-2026 10:50"
+// ================================================================
+function formatSimpleDateTime(dateInput) {
+  if (dateInput === null || dateInput === undefined || dateInput === '') return '';
+
+  let date = null;
+
+  if (dateInput instanceof Date) {
+    date = dateInput;
+  } else if (typeof dateInput === 'number') {
+    date = new Date(dateInput);
+  } else {
+    const str = String(dateInput).trim();
+    if (!str) return '';
+
+    // Try native parse first
+    const native = new Date(str);
+    if (!isNaN(native.getTime()) &&
+        native.getFullYear() >= 2000 &&
+        native.getFullYear() <= 2100) {
+      date = native;
+    } else {
+      // Fallback: match d-M-yyyy HH:mm (our own stored format)
+      const m = str.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})[\s,]+(\d{1,2}):(\d{2})/);
+      if (m) {
+        date = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5]);
+      }
+    }
+  }
+
+  if (!date || isNaN(date.getTime())) return String(dateInput);
+
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');   // 24‑hour
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
+}
+
+// ================================================================
+// PERSISTENT LOGIN
+// ================================================================
+function saveSession() {
+  if (currentUser.loggedIn) {
+    localStorage.setItem('stopSession', JSON.stringify({
+      currentUser,
+      companyConfig
+    }));
+  } else {
+    localStorage.removeItem('stopSession');
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem('stopSession');
+}
+
+function restoreSession() {
+  try {
+    const raw = localStorage.getItem('stopSession');
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (!saved.currentUser || !saved.currentUser.loggedIn) return false;
+    currentUser = saved.currentUser;
+    companyConfig = saved.companyConfig || companyConfig;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// ================================================================
+// FILTER BAR TOGGLE
+// ================================================================
+function toggleCloudFilterBar() {
+  const bar = $('cloudFilterBar');
+  const chevron = $('cloudFilterChevron');
+  const isOpen = bar.style.display !== 'none';
+  bar.style.display = isOpen ? 'none' : 'block';
+  if (chevron) {
+    chevron.classList.toggle('fa-chevron-down', isOpen);
+    chevron.classList.toggle('fa-chevron-up', !isOpen);
+  }
+}
+
+function updateCloudFilterCount() {
+  const ids = ['cloudSearch','cloudFilterStatus','cloudFilterType','cloudFilterArea','cloudFilterLocation','cloudFilterApproval'];
+  let count = 0;
+  ids.forEach(id => { const el = $(id); if (el && el.value && el.value.trim() !== '') count++; });
+  const badge = $('cloudActiveFilterCount');
+  if (badge) badge.textContent = count > 0 ? `(${count} active)` : '';
+}
+
+
 // ================================================================
 // INIT
 // ================================================================
-function init() {
+async function init() {
   updateLocalization();
-  const d = new Date(); d.setDate(d.getDate()+30);
+  const d = new Date(); d.setDate(d.getDate() + 30);
   if ($('targetDate')) $('targetDate').value = d.toISOString().split('T')[0];
   renderSafetyChecks('hse');
   updatePendingUI();
-  loadMyCards();
-  handleTokenLogin();
-  if (currentUser.loggedIn) {
+
+  // Try restoring a saved session first
+  const restored = restoreSession();
+  if (restored) {
+    // Rebuild UI to reflect logged-in state
+    $('userBadge').innerHTML = `<i class="fas fa-user"></i> ${escHtml(currentUser.name)}${currentUser.role === 'hseq' ? ' (HSEQ)' : ''}`;
+    $('loginBtn').innerHTML = `<i class="fas fa-sign-out-alt"></i> ${t('logout')}`;
+    $('workerLoginBtn').style.display = 'inline-block';
+    $('syncBtn').style.display = 'inline-block';
+    $('appTitle').textContent = companyConfig.pdfTitle || 'STOP Card System';
+    if (currentUser.role === 'admin' || currentUser.role === 'hseq') {
+      $('qrBtn').style.display = 'inline-block';
+    }
+    // Pre-fill worker fields if worker is logged in
+    if (currentUser.id && currentUser.role !== 'admin') {
+      $('reporterName').value = currentUser.name || '';
+      $('reporterId').value = currentUser.id || '';
+      $('jobTitle').value = currentUser.job || '';
+      $('department').value = currentUser.department || '';
+    }
+    // Reload workers list for autofill
+    await loadWorkers();
+    populateCompanyDropdowns();
+    loadMyCards();
     loadCharts();
     if ($('panel-cloud').classList.contains('active')) loadCloudCards();
   }
+
+  loadMyCards();
+  handleTokenLogin();
   console.log('STOP Card System ready.');
 }
 document.addEventListener('DOMContentLoaded', init);
