@@ -510,7 +510,7 @@
 // ================================================================
 // CONFIG & GLOBAL STATE
 // ================================================================
-const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSqiDNkLovLmEYBkYTteSeHPk8jAiG69wUuyonc1_D7bs48yyb59xZQnJ6yVPcOagI/exec'; // <-- REPLACE
+const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwLSjPge0A-C9iIZrAJpCanPJkHLkvWpUjBTXiJ4rC0sXqepzjhyOSVoq9AN5UWs2jA/exec'; // <-- REPLACE
 
 let currentLang = 'en';
 let currentUser = { name: 'Guest', id: '', loggedIn: false, role: 'worker', companyId: '', companyName: '', department: '' };
@@ -672,7 +672,6 @@ function showToast(msg, type='info', dur=4000) {
   c.appendChild(t);
   setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(10px)'; t.style.transition='all .3s'; setTimeout(()=>t.remove(),300); }, dur);
 }
-
 async function apiCall(action, payload = {}) {
   try {
     const fd = new FormData();
@@ -682,12 +681,47 @@ async function apiCall(action, payload = {}) {
       else if (typeof v === 'object' && v !== null) fd.append(k, JSON.stringify(v));
       else fd.append(k, String(v));
     }
-    const resp = await fetch(APP_SCRIPT_URL, { method: 'POST', body: fd });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    let resp;
+    try {
+      resp = await fetch(APP_SCRIPT_URL, { method: 'POST', body: fd, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
     const text = await resp.text();
-    try { return JSON.parse(text); } catch(e) { return { success: false, error: 'Invalid response: ' + text }; }
-  } catch(err) { return { success: false, error: err.message }; }
+    const trimmed = (text || '').trim();
+
+    // Detect HTML error pages (Google Drive / Apps Script errors)
+    if (
+      !trimmed ||
+      trimmed.startsWith('<!DOCTYPE') ||
+      trimmed.startsWith('<html') ||
+      trimmed.startsWith('<HTML') ||
+      trimmed.startsWith('<!doctype')
+    ) {
+      return { success: false, error: 'CONNECTION_ERROR', isConnectionError: true };
+    }
+
+    try {
+      return JSON.parse(trimmed);
+    } catch (e) {
+      return { success: false, error: 'CONNECTION_ERROR', isConnectionError: true };
+    }
+  } catch (err) {
+    if (err && err.name === 'AbortError') {
+      return { success: false, error: 'Request timed out', isConnectionError: true };
+    }
+    return { success: false, error: 'CONNECTION_ERROR', isConnectionError: true };
+  }
 }
 
+// Helper to show a friendly connection error
+function showConnectionError() {
+  showToast('Connection problem. Your card will be saved locally and can be synced later.', 'error', 6000);
+}
 // ================================================================
 // CLOSE MODAL
 // ================================================================
@@ -826,8 +860,10 @@ saveSession();   // <-- ADD THIS LINE
       showToast(`${pendingCards.length} ${t('pendingCards')} available. Click "Sync" to upload.`, 'info', 5000);
     }
   } else {
-    $('loginError').textContent = result.error || 'Login failed';
-    $('loginError').style.display = 'block';
+    $('loginError').textContent = result.isConnectionError
+    ? 'Cannot reach the server. Please check your connection and try again.'
+    : (result.error || 'Login failed');
+  $('loginError').style.display = 'block';
   }
   btn.disabled = false;
   btn.innerHTML = originalText;
@@ -877,8 +913,10 @@ const isHSEQ = currentUser.role === 'hseq';
 document.getElementById('exportBtn').style.display = isHSEQ ? 'inline-block' : 'none';
 document.getElementById('exportMyBtn').style.display = isHSEQ ? 'inline-block' : 'none';
   } else {
-    $('workerLoginError').textContent = result.error || 'Login failed';
-    $('workerLoginError').style.display = 'block';
+    $('workerLoginError').textContent = result.isConnectionError
+    ? 'Cannot reach the server. Please check your connection and try again.'
+    : (result.error || 'Login failed');
+  $('workerLoginError').style.display = 'block';
   }
     btn.disabled = false;
   btn.innerHTML = originalText;
@@ -1154,6 +1192,9 @@ function safetyCheckChanged(key, isSafe) {
 // ================================================================
 async function submitStopCard(e) {
   e.preventDefault();
+  if (window._submittingCard) return false;   // hard lock
+  window._submittingCard = true;
+
   const btn = $('submitBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Submitting...';
@@ -1161,7 +1202,10 @@ async function submitStopCard(e) {
   try {
     const safetyChecks = {};
     for (const [key, value] of Object.entries(safetyChecksData)) safetyChecks[key] = value;
+
+    const clientId = generateUUID();   // unique per card
     const data = {
+      clientId,
       companyId: currentUser.companyId || '',
       reporter: $('reporterName').value.trim(),
       reporterId: $('reporterId').value.trim(),
@@ -1179,13 +1223,11 @@ async function submitStopCard(e) {
       safetyChecks: JSON.stringify(safetyChecks),
       imageUrl: ''
     };
+
     if (!data.reporter || !data.area || !data.location || !data.observation || !data.obsType) {
       showToast('Please fill in all required fields.', 'error');
-      btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> '+t('submit');
       return false;
     }
-
-    // If worker is logged in, set reporterId
     if (currentUser.id) {
       data.reporterId = currentUser.id;
       $('reporterId').value = currentUser.id;
@@ -1194,42 +1236,104 @@ async function submitStopCard(e) {
     let imageUrl = '';
     if (selectedFileBase64) {
       if (currentUser.loggedIn && companyConfig.folderId) {
-        const uploadResult = await apiCall('uploadImage', { file: selectedFileBase64, reporter: data.reporter, timestamp: data.timestamp, folderId: companyConfig.folderId });
-        if (uploadResult.success) { imageUrl = uploadResult.url; showToast('Image uploaded ✓','success'); }
-        else showToast('Image upload failed: ' + uploadResult.error, 'error');
+        const uploadResult = await apiCall('uploadImage', {
+          file: selectedFileBase64,
+          reporter: data.reporter,
+          timestamp: data.timestamp,
+          folderId: companyConfig.folderId
+        });
+        if (uploadResult.success) {
+          imageUrl = uploadResult.url;
+        } else if (uploadResult.isConnectionError) {
+          data.imageBase64 = selectedFileBase64;    // keep for later sync
+        } else {
+          data.imageBase64 = selectedFileBase64;
+        }
       } else {
         data.imageBase64 = selectedFileBase64;
       }
     }
     data.imageUrl = imageUrl;
 
-    if (currentUser.loggedIn && companyConfig.observationsSheetId) {
-      const saveResult = await apiCall('saveCard', { data, imageUrl, observationsSheetId: companyConfig.observationsSheetId, safetyChecks: JSON.stringify(safetyChecks) ,   loggedInUserId: currentUser.id || '' // ADD THIS
-});
+    // Try cloud save (one trial only – no retry loop)
+    if (currentUser.loggedIn && companyConfig.observationsSheetId && !data.imageBase64) {
+      const saveResult = await apiCall('saveCard', {
+        data,
+        imageUrl,
+        observationsSheetId: companyConfig.observationsSheetId,
+        safetyChecks: JSON.stringify(safetyChecks),
+        loggedInUserId: currentUser.id || ''
+      });
+
       if (saveResult.success) {
         showToast('STOP Card saved successfully! ID: ' + (saveResult.id || 'N/A'), 'success');
-        $('stopCardForm').reset(); removeFile();
-        safetyChecksData = {}; renderSafetyChecks($('safetyMode').value);
-        await loadMyCards(); await loadCharts();
+        $('stopCardForm').reset();
+        removeFile();
+        safetyChecksData = {};
+        renderSafetyChecks($('safetyMode').value);
+        await loadMyCards();
+        await loadCharts();
         if ($('panel-cloud').classList.contains('active')) await loadCloudCards();
-      } else {
-        showToast('Failed to save: ' + (saveResult.error || 'unknown'), 'error');
-        savePendingCard(data);
+        return false;
       }
-    } else {
+
+      // Failure → fall back to local storage
+      if (saveResult.isConnectionError) {
+        showConnectionError();
+      } else {
+        showToast('Save failed: ' + (saveResult.error || 'unknown') + '. Saved locally.', 'error');
+      }
       savePendingCard(data);
-      showToast('Card saved locally. Login to sync.', 'info');
-      $('stopCardForm').reset(); removeFile();
-      safetyChecksData = {}; renderSafetyChecks($('safetyMode').value);
-      updatePendingUI();
-      loadMyCards();
+    } else {
+      // Offline / not logged in / image not uploaded → local only
+      savePendingCard(data);
+      showToast('Card saved locally. Login & sync to upload.', 'info');
     }
-  } catch (err) { showToast('Error: '+err.message, 'error'); }
-  finally { btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> '+t('submit'); }
+
+    $('stopCardForm').reset();
+    removeFile();
+    safetyChecksData = {};
+    renderSafetyChecks($('safetyMode').value);
+    updatePendingUI();
+    loadMyCards();
+  } catch (err) {
+    showConnectionError();
+    // ensure card is still saved locally
+    try {
+      const safetyChecks = {};
+      for (const [key, value] of Object.entries(safetyChecksData)) safetyChecks[key] = value;
+      savePendingCard({
+        clientId: generateUUID(),
+        companyId: currentUser.companyId || '',
+        reporter: $('reporterName').value.trim(),
+        reporterId: $('reporterId').value.trim() || currentUser.id || '',
+        job: $('jobTitle').value.trim(),
+        department: $('department').value,
+        area: $('area').value.trim(),
+        location: $('location').value.trim(),
+        observation: $('observation').value.trim(),
+        obsType: $('obsType').value,
+        status: $('status').value,
+        recommendation: $('recommendation').value.trim(),
+        targetDate: $('targetDate').value,
+        respDept: $('respDept').value,
+        timestamp: new Date().toISOString(),
+        safetyChecks: JSON.stringify(safetyChecks),
+        imageBase64: selectedFileBase64 || ''
+      });
+    } catch (_) {}
+  } finally {
+    window._submittingCard = false;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> ' + t('submit');
+  }
   return false;
 }
 
 function savePendingCard(data) {
+  if (!data.clientId) data.clientId = generateUUID();
+  // Prevent duplicates
+  if (pendingCards.some(c => c.clientId === data.clientId)) return;
   pendingCards.push(data);
   localStorage.setItem('pendingCards', JSON.stringify(pendingCards));
   updatePendingUI();
@@ -1260,21 +1364,54 @@ async function syncPendingCards() {
     showToast(t('noPending'), 'info');
     return;
   }
-  const result = await apiCall('uploadPendingCards', {
-    cards: pendingCards,
-    observationsSheetId: companyConfig.observationsSheetId,
-      loggedInUserId: currentUser.id || '' // ADD THIS
+  const btn = $('syncBtn');
+  const originalHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Syncing...';
 
-  });
-  if (result.success) {
-    showToast(t('syncSuccess'), 'success');
-    pendingCards = [];
-    localStorage.removeItem('pendingCards');
-    updatePendingUI();
-    loadMyCards(); loadCharts();
-    if ($('panel-cloud').classList.contains('active')) loadCloudCards();
-  } else {
-    showToast('Sync failed: ' + (result.error || ''), 'error');
+  try {
+    // Upload images first (one trial each)
+    for (const card of pendingCards) {
+      if (card.imageBase64 && !card.imageUrl && companyConfig.folderId) {
+        const up = await apiCall('uploadImage', {
+          file: card.imageBase64,
+          reporter: card.reporter || 'unknown',
+          timestamp: card.timestamp || new Date().toISOString(),
+          folderId: companyConfig.folderId
+        });
+        if (up.success) {
+          card.imageUrl = up.url;
+          delete card.imageBase64;
+        } else {
+          // stop – connectivity still down
+          showConnectionError();
+          return;
+        }
+      }
+    }
+
+    const result = await apiCall('uploadPendingCards', {
+      cards: pendingCards,
+      observationsSheetId: companyConfig.observationsSheetId,
+      loggedInUserId: currentUser.id || ''
+    });
+
+    if (result.success) {
+      showToast(t('syncSuccess'), 'success');
+      pendingCards = [];
+      localStorage.removeItem('pendingCards');
+      updatePendingUI();
+      loadMyCards();
+      loadCharts();
+      if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+    } else if (result.isConnectionError) {
+      showConnectionError();
+    } else {
+      showToast('Sync failed: ' + (result.error || ''), 'error');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
   }
 }
 
@@ -2383,7 +2520,13 @@ function getTypeBadge(type) {
   return `<span class="badge badge-blue">${type || 'N/A'}</span>`;
 }
 function escHtml(str) { if (!str) return ''; const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
-
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 // ================================================================
 // TAB SWITCHING
 // ================================================================
