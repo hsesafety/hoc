@@ -195,6 +195,34 @@
         <div class="form-group"><label data-i18n="responsibleDepartment">Responsible Department</label><select id="editRespDeptCloud"><option value="">Select</option><option value="HSEQ">HSEQ</option><option value="Operation">Operation</option><option value="Maintenance">Maintenance</option><option value="Administration">Administration</option><option value="Other">Other</option></select></div>
       </div>
       <div class="form-group"><label data-i18n="approval">Approval</label><select id="editApprovalCloud"><option value="pending">Pending</option><option value="approved">Approved</option><option value="unapproved">Unapproved</option></select></div>
+      <div class="form-group">
+  <label>Observation Date &amp; Time</label>
+  <input type="datetime-local" id="editTimestampCloud">
+</div>
+
+<div class="card" style="margin-top:16px; border:1px solid #f0d9b5; background:#fffbf0; padding:16px;">
+  <div class="card-title" style="font-size:15px; color:#e37400; margin-bottom:12px;">
+    <i class="fas fa-wrench"></i> Corrective Action
+  </div>
+  <div class="form-group">
+    <label>Description</label>
+    <textarea id="editCADescCloud" rows="2"></textarea>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>By</label>
+      <input type="text" id="editCAByCloud">
+    </div>
+    <div class="form-group">
+      <label>Date &amp; Time</label>
+      <input type="datetime-local" id="editCADateCloud">
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Image URL</label>
+    <input type="text" id="editCAImageCloud" placeholder="https://...">
+  </div>
+</div>
       <button class="btn btn-primary btn-block" onclick="saveFullEditCloud()"><i class="fas fa-save"></i> <span data-i18n="save">Save</span></button>
       <p id="fullEditErrorCloud" style="color:red; margin-top:8px; display:none;"></p>
     </div>
@@ -223,6 +251,34 @@
         <div class="form-group"><label data-i18n="responsibleDepartment">Responsible Department</label><select id="editRespDeptMy"><option value="">Select</option><option value="HSEQ">HSEQ</option><option value="Operation">Operation</option><option value="Maintenance">Maintenance</option><option value="Administration">Administration</option><option value="Other">Other</option></select></div>
       </div>
       <div class="form-group"><label data-i18n="approval">Approval</label><select id="editApprovalMy"><option value="pending">Pending</option><option value="approved">Approved</option><option value="unapproved">Unapproved</option></select></div>
+      <div class="form-group">
+  <label>Observation Date &amp; Time</label>
+  <input type="datetime-local" id="editTimestampCloud">
+</div>
+
+<div class="card" style="margin-top:16px; border:1px solid #f0d9b5; background:#fffbf0; padding:16px;">
+  <div class="card-title" style="font-size:15px; color:#e37400; margin-bottom:12px;">
+    <i class="fas fa-wrench"></i> Corrective Action
+  </div>
+  <div class="form-group">
+    <label>Description</label>
+    <textarea id="editCADescCloud" rows="2"></textarea>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>By</label>
+      <input type="text" id="editCAByCloud">
+    </div>
+    <div class="form-group">
+      <label>Date &amp; Time</label>
+      <input type="datetime-local" id="editCADateCloud">
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Image URL</label>
+    <input type="text" id="editCAImageCloud" placeholder="https://...">
+  </div>
+</div>
       <button class="btn btn-primary btn-block" onclick="saveFullEditMy()"><i class="fas fa-save"></i> <span data-i18n="save">Save</span></button>
       <p id="fullEditErrorMy" style="color:red; margin-top:8px; display:none;"></p>
     </div>
@@ -510,7 +566,7 @@
 // ================================================================
 // CONFIG & GLOBAL STATE
 // ================================================================
-const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwLSjPge0A-C9iIZrAJpCanPJkHLkvWpUjBTXiJ4rC0sXqepzjhyOSVoq9AN5UWs2jA/exec'; // <-- REPLACE
+const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBpMCi-oMVojGgUK72acI1MD8ufbhwt449uFDYZryhJUv0CpSyBm6jt22-1hAEsgdG/exec'; // <-- REPLACE
 
 let currentLang = 'en';
 let currentUser = { name: 'Guest', id: '', loggedIn: false, role: 'worker', companyId: '', companyName: '', department: '' };
@@ -1733,59 +1789,108 @@ function openFullEditModalCloud(index) {
   editingRowIndex = card._sheetRowIndex - 1;
   editingCard = card;
 
-  $('editReporterCloud').value = card.Reporter || '';
-  $('editReporterIdCloud').value = card.ReporterId || '';
-  $('editJobCloud').value = card.Job || '';
-  $('editAreaCloud').value = card.Area || '';
-  $('editLocationCloud').value = card.Location || '';
-  $('editObservationCloud').value = card.Observation || '';
-  $('editObsTypeCloud').value = card.ObservationType || '';
-  $('editStatusCloud').value = card.Status || '';
+  $('editReporterCloud').value       = card.Reporter || '';
+  $('editReporterIdCloud').value     = card.ReporterId || '';
+  $('editJobCloud').value            = card.Job || '';
+  $('editAreaCloud').value           = card.Area || '';
+  $('editLocationCloud').value       = card.Location || '';
+  $('editObservationCloud').value    = card.Observation || '';
+  $('editObsTypeCloud').value        = card.ObservationType || 'unsafe_condition';
+  $('editStatusCloud').value         = card.Status || 'Pending';
   $('editRecommendationCloud').value = card.Recommendation || '';
-  $('editTargetDateCloud').value = card.TargetDate || '';
-  $('editRespDeptCloud').value = card.ResponsibleDepartment || '';
-  $('editApprovalCloud').value = card.Approval || 'pending';
+  $('editTargetDateCloud').value     = card.TargetDate || '';
+  $('editRespDeptCloud').value       = card.ResponsibleDepartment || '';
+  $('editApprovalCloud').value       = card.Approval || 'pending';
+
+  // NEW fields
+  $('editTimestampCloud').value      = toDateTimeLocalValue(card.Timestamp);
+  $('editCADescCloud').value         = card.CorrectiveActionDescription || '';
+  $('editCAByCloud').value           = card.CorrectiveActionBy || '';
+  $('editCADateCloud').value         = toDateTimeLocalValue(card.CorrectiveActionDate);
+  $('editCAImageCloud').value        = card.CorrectiveActionImage || '';
 
   $('fullEditModalCloud').classList.add('active');
   $('fullEditErrorCloud').style.display = 'none';
 }
-
 async function saveFullEditCloud() {
-  const rowIndex = editingRowIndex;
   const data = {
-    reporter: $('editReporterCloud').value.trim(),
-    reporterId: $('editReporterIdCloud').value.trim(),
-    job: $('editJobCloud').value.trim(),
-    area: $('editAreaCloud').value.trim(),
-    location: $('editLocationCloud').value.trim(),
-    observation: $('editObservationCloud').value.trim(),
-    obsType: $('editObsTypeCloud').value,
-    status: $('editStatusCloud').value,
+    reporter:       $('editReporterCloud').value.trim(),
+    reporterId:     $('editReporterIdCloud').value.trim(),
+    job:            $('editJobCloud').value.trim(),
+    area:           $('editAreaCloud').value.trim(),
+    location:       $('editLocationCloud').value.trim(),
+    observation:    $('editObservationCloud').value.trim(),
+    obsType:        $('editObsTypeCloud').value,
+    status:         $('editStatusCloud').value,
     recommendation: $('editRecommendationCloud').value.trim(),
-    targetDate: $('editTargetDateCloud').value,
-    respDept: $('editRespDeptCloud').value,
-    approval: $('editApprovalCloud').value,
-    department: $('editRespDeptCloud').value // for consistency
+    targetDate:     $('editTargetDateCloud').value,
+    respDept:       $('editRespDeptCloud').value,
+    approval:       $('editApprovalCloud').value,
+    department:     $('editRespDeptCloud').value,
+
+    // NEW
+    timestamp:      fromDateTimeLocalValue($('editTimestampCloud').value),
+    caDescription:  $('editCADescCloud').value.trim(),
+    caBy:           $('editCAByCloud').value.trim(),
+    caDate:         fromDateTimeLocalValue($('editCADateCloud').value),
+    caImage:        $('editCAImageCloud').value.trim(),
   };
 
   const result = await apiCall('updateFullObservation', {
-    rowIndex: rowIndex,
+    rowIndex: editingRowIndex,
     observationsSheetId: companyConfig.observationsSheetId,
-    data: data
+    data
   });
 
   if (result.success) {
     showToast('Observation updated', 'success');
     $('fullEditModalCloud').classList.remove('active');
-    loadCloudCards();
-    loadMyCards();
-    loadCharts();
+    loadCloudCards(); loadMyCards(); loadCharts();
   } else {
     $('fullEditErrorCloud').textContent = result.error || 'Update failed';
     $('fullEditErrorCloud').style.display = 'block';
   }
 }
 
+async function saveFullEditMy() {
+  const data = {
+    reporter:       $('editReporterMy').value.trim(),
+    reporterId:     $('editReporterIdMy').value.trim(),
+    job:            $('editJobMy').value.trim(),
+    area:           $('editAreaMy').value.trim(),
+    location:       $('editLocationMy').value.trim(),
+    observation:    $('editObservationMy').value.trim(),
+    obsType:        $('editObsTypeMy').value,
+    status:         $('editStatusMy').value,
+    recommendation: $('editRecommendationMy').value.trim(),
+    targetDate:     $('editTargetDateMy').value,
+    respDept:       $('editRespDeptMy').value,
+    approval:       $('editApprovalMy').value,
+    department:     $('editRespDeptMy').value,
+
+    // NEW
+    timestamp:      fromDateTimeLocalValue($('editTimestampMy').value),
+    caDescription:  $('editCADescMy').value.trim(),
+    caBy:           $('editCAByMy').value.trim(),
+    caDate:         fromDateTimeLocalValue($('editCADateMy').value),
+    caImage:        $('editCAImageMy').value.trim(),
+  };
+
+  const result = await apiCall('updateFullObservation', {
+    rowIndex: editingRowIndex,
+    observationsSheetId: companyConfig.observationsSheetId,
+    data
+  });
+
+  if (result.success) {
+    showToast('Observation updated', 'success');
+    $('fullEditModalMy').classList.remove('active');
+    loadMyCards(); loadCloudCards(); loadCharts();
+  } else {
+    $('fullEditErrorMy').textContent = result.error || 'Update failed';
+    $('fullEditErrorMy').style.display = 'block';
+  }
+}
 // ================================================================
 // Voice to text
 // ================================================================
@@ -1865,57 +1970,28 @@ function openFullEditModalMy(index) {
   editingRowIndex = card._sheetRowIndex - 1;
   editingCard = card;
 
-  $('editReporterMy').value = card.Reporter || '';
-  $('editReporterIdMy').value = card.ReporterId || '';
-  $('editJobMy').value = card.Job || '';
-  $('editAreaMy').value = card.Area || '';
-  $('editLocationMy').value = card.Location || '';
-  $('editObservationMy').value = card.Observation || '';
-  $('editObsTypeMy').value = card.ObservationType || '';
-  $('editStatusMy').value = card.Status || '';
+  $('editReporterMy').value       = card.Reporter || '';
+  $('editReporterIdMy').value     = card.ReporterId || '';
+  $('editJobMy').value            = card.Job || '';
+  $('editAreaMy').value           = card.Area || '';
+  $('editLocationMy').value       = card.Location || '';
+  $('editObservationMy').value    = card.Observation || '';
+  $('editObsTypeMy').value        = card.ObservationType || 'unsafe_condition';
+  $('editStatusMy').value         = card.Status || 'Pending';
   $('editRecommendationMy').value = card.Recommendation || '';
-  $('editTargetDateMy').value = card.TargetDate || '';
-  $('editRespDeptMy').value = card.ResponsibleDepartment || '';
-  $('editApprovalMy').value = card.Approval || 'pending';
+  $('editTargetDateMy').value     = card.TargetDate || '';
+  $('editRespDeptMy').value       = card.ResponsibleDepartment || '';
+  $('editApprovalMy').value       = card.Approval || 'pending';
+
+  // NEW fields
+  $('editTimestampMy').value      = toDateTimeLocalValue(card.Timestamp);
+  $('editCADescMy').value         = card.CorrectiveActionDescription || '';
+  $('editCAByMy').value           = card.CorrectiveActionBy || '';
+  $('editCADateMy').value         = toDateTimeLocalValue(card.CorrectiveActionDate);
+  $('editCAImageMy').value        = card.CorrectiveActionImage || '';
 
   $('fullEditModalMy').classList.add('active');
   $('fullEditErrorMy').style.display = 'none';
-}
-
-async function saveFullEditMy() {
-  const rowIndex = editingRowIndex;
-  const data = {
-    reporter: $('editReporterMy').value.trim(),
-    reporterId: $('editReporterIdMy').value.trim(),
-    job: $('editJobMy').value.trim(),
-    area: $('editAreaMy').value.trim(),
-    location: $('editLocationMy').value.trim(),
-    observation: $('editObservationMy').value.trim(),
-    obsType: $('editObsTypeMy').value,
-    status: $('editStatusMy').value,
-    recommendation: $('editRecommendationMy').value.trim(),
-    targetDate: $('editTargetDateMy').value,
-    respDept: $('editRespDeptMy').value,
-    approval: $('editApprovalMy').value,
-    department: $('editRespDeptMy').value
-  };
-
-  const result = await apiCall('updateFullObservation', {
-    rowIndex: rowIndex,
-    observationsSheetId: companyConfig.observationsSheetId,
-    data: data
-  });
-
-  if (result.success) {
-    showToast('Observation updated', 'success');
-    $('fullEditModalMy').classList.remove('active');
-    loadMyCards();
-    loadCloudCards();
-    loadCharts();
-  } else {
-    $('fullEditErrorMy').textContent = result.error || 'Update failed';
-    $('fullEditErrorMy').style.display = 'block';
-  }
 }
 
 // ================================================================
@@ -2943,6 +3019,31 @@ function compressImage(file, maxDimension = 1600, targetKB = 200) {
     reader.onerror = () => reject(new Error('File read failed'));
     reader.readAsDataURL(file);
   });
+}
+
+// ================================================================
+// DATETIME-LOCAL HELPERS
+// ================================================================
+function toDateTimeLocalValue(input) {
+  if (!input) return '';
+  let d = input instanceof Date ? input : new Date(input);
+  if (isNaN(d.getTime())) {
+    // Try dd-M-yyyy HH:mm
+    const m = String(input).match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})[\s,]+(\d{1,2}):(\d{2})/);
+    if (m) d = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5]);
+    else return '';
+  }
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fromDateTimeLocalValue(v) {
+  if (!v) return '';
+  const [datePart, timePart] = v.split('T');
+  if (!datePart || !timePart) return '';
+  const [y, m, d] = datePart.split('-');
+  const [hh, mm] = timePart.split(':');
+  return `${Number(d)}-${Number(m)}-${y} ${hh}:${mm}`;
 }
 // ================================================================
 // INIT
