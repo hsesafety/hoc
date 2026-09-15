@@ -462,7 +462,15 @@
       <div><h4>By Responsible Department</h4><div class="chart-container"><canvas id="chartDept"></canvas></div></div>
       <div><h4>By Approval</h4><div class="chart-container"><canvas id="chartApproval"></canvas></div></div>
     </div>
+<div style="margin-top:24px;">
+  <h4>Life Saving Rules – Unsafe Count</h4>
+  <div class="chart-container" style="height:340px;"><canvas id="chartLSR"></canvas></div>
+</div>
 
+<div style="margin-top:24px;">
+  <h4>General Hazards – Unsafe Count</h4>
+  <div class="chart-container" style="height:460px;"><canvas id="chartGH"></canvas></div>
+</div>
     <div style="margin-top:24px;">
       <h4>Monthly Trend (last 6 months)</h4>
       <div class="chart-container" style="height:280px;"><canvas id="chartMonthly"></canvas></div>
@@ -2533,7 +2541,10 @@ async function loadCharts() {
     const label = d.toLocaleString('en', { month: 'short', year: 'numeric' });
     if (label in monthly) monthly[label]++;
   });
-
+// Safety-check charts (2D horizontal bars)
+const safetyData = buildSafetyCheckChartData(cards);
+renderHorizontalBarChart('chartLSR', safetyData.lsr, '#d32f2f');
+renderHorizontalBarChart('chartGH', safetyData.gh, '#e37400');
   renderChart('chartType', byType, 'Observation Types', ['#d32f2f','#e37400','#7c3aed','#0f9d58'], 'doughnut');
   renderChart('chartStatus', byStatus, 'Status', ['#e37400','#0f9d58','#1a73e8'], 'pie');
   renderChart('chartArea', byArea, 'By Area', null, 'bar');
@@ -3044,6 +3055,205 @@ function fromDateTimeLocalValue(v) {
   const [y, m, d] = datePart.split('-');
   const [hh, mm] = timePart.split(':');
   return `${Number(d)}-${Number(m)}-${y} ${hh}:${mm}`;
+}
+// ================================================================
+// 3D SAFETY-CHECK CHARTS (Life Saving Rules & General Hazards)
+// ================================================================
+const echarts3DInstances = { lsr: null, gh: null };
+
+function render3DBarChart(containerId, dataObj, colorFrom, colorTo) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  const keys = Object.keys(dataObj);
+  const values = keys.map(k => dataObj[k]);
+
+  // Dispose previous instance
+  if (echarts3DInstances[containerId === 'chartLSR3D' ? 'lsr' : 'gh']) {
+    echarts3DInstances[containerId === 'chartLSR3D' ? 'lsr' : 'gh'].dispose();
+  }
+
+  if (keys.length === 0) {
+    el.innerHTML = '<div class="text-center text-muted" style="padding:40px 0;">No data</div>';
+    return;
+  }
+
+  const chart = echarts.init(el);
+  const maxVal = Math.max(...values, 1);
+
+  // data format for bar3D: [xIndex, yIndex, value]
+  const seriesData = values.map((v, i) => [i, 0, v]);
+
+  const option = {
+    tooltip: {
+      formatter: p => `${keys[p.value[0]]}<br/>Unsafe count: <b>${p.value[2]}</b>`
+    },
+    visualMap: {
+      show: false,
+      min: 0,
+      max: maxVal,
+      inRange: { color: [colorFrom, colorTo] }
+    },
+    xAxis3D: {
+      type: 'category',
+      data: keys,
+      axisLabel: {
+        interval: 0,
+        rotate: 35,
+        fontSize: 10,
+        formatter: v => v.length > 16 ? v.substring(0, 15) + '…' : v
+      }
+    },
+    yAxis3D: {
+      type: 'category',
+      data: ['Unsafe']
+    },
+    zAxis3D: {
+      type: 'value',
+      min: 0,
+      max: maxVal
+    },
+    grid3D: {
+      boxWidth: 220,
+      boxDepth: 40,
+      boxHeight: 90,
+      viewControl: {
+        projection: 'perspective',
+        autoRotate: true,
+        autoRotateSpeed: 6,
+        distance: 260,
+        alpha: 22,
+        beta: 35
+      },
+      light: {
+        main: { intensity: 1.3, shadow: true, alpha: 30, beta: 30 },
+        ambient: { intensity: 0.35 }
+      }
+    },
+    series: [{
+      type: 'bar3D',
+      data: seriesData,
+      shading: 'lambert',
+      barSize: 0.55,
+      bevelSize: 0.15,
+      bevelSmoothness: 4,
+      label: {
+        show: true,
+        formatter: p => p.value[2],
+        fontSize: 10,
+        color: '#fff'
+      },
+      emphasis: {
+        label: { fontSize: 12 },
+        itemStyle: { color: '#1a73e8' }
+      }
+    }]
+  };
+
+  chart.setOption(option);
+
+  // Store instance for disposal / resize
+  if (containerId === 'chartLSR3D') echarts3DInstances.lsr = chart;
+  else echarts3DInstances.gh = chart;
+
+  // Resize on window resize
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// Aggregate unsafe counts per Life Saving Rule & General Hazard
+// ================================================================
+// SAFETY-CHECK CHARTS (Life Saving Rules & General Hazards)
+// ================================================================
+function renderHorizontalBarChart(canvasId, dataObj, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  if (chartInstances[canvasId]) {
+    chartInstances[canvasId].destroy();
+    chartInstances[canvasId] = null;
+  }
+
+  const labels = Object.keys(dataObj);
+  const values = Object.values(dataObj);
+
+  chartInstances[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Unsafe count',
+        data: values,
+        backgroundColor: color,
+        borderColor: color,
+        borderWidth: 1,
+        borderRadius: 4,
+        barThickness: 18
+      }]
+    },
+    options: {
+      indexAxis: 'y',               // horizontal bars
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` Unsafe: ${ctx.parsed.x}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { precision: 0, stepSize: 1 },
+          grid: { color: '#eef2f7' },
+          title: { display: true, text: 'Number of observations', font: { size: 11 } }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+// Aggregate unsafe counts per Life Saving Rule & General Hazard
+function buildSafetyCheckChartData(cards) {
+  const lsr = {};
+  const gh = {};
+
+  safetyChecklists.hse.lifeSavingRules.forEach(r => { lsr[r.en] = 0; });
+  safetyChecklists.hse.generalHazards.forEach(h => { gh[h.en] = 0; });
+
+  cards.forEach(card => {
+    if (!card.SafetyChecks) return;
+    let checks;
+    try { checks = JSON.parse(card.SafetyChecks); } catch (e) { return; }
+
+    for (const [key, isSafe] of Object.entries(checks)) {
+      if (isSafe) continue;
+
+      if (key.startsWith('lifeSavingRules_')) {
+        const suffix = key.substring('lifeSavingRules_'.length);
+        const match = safetyChecklists.hse.lifeSavingRules.find(
+          r => r.en.replace(/\s/g, '_') === suffix
+        );
+        const label = match ? match.en : suffix.replace(/_/g, ' ');
+        if (lsr[label] !== undefined) lsr[label]++;
+      } else if (key.startsWith('generalHazards_')) {
+        const suffix = key.substring('generalHazards_'.length);
+        const match = safetyChecklists.hse.generalHazards.find(
+          h => h.en.replace(/\s/g, '_') === suffix
+        );
+        const label = match ? match.en : suffix.replace(/_/g, ' ');
+        if (gh[label] !== undefined) gh[label]++;
+      }
+    }
+  });
+
+  return { lsr, gh };
 }
 // ================================================================
 // INIT
