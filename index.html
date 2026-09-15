@@ -12,8 +12,7 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Segoe UI',sans-serif; background:#f0f4f8; color:#1a2332; }
     .container { max-width:1000px; margin:0 auto; padding:16px; }
-    .app-header { background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff; padding:16px 0; box-shadow:0 4px 12px rgba(0,0,0,.15); position:sticky; top:0; z-index:100; }
-    .app-header .container { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.app-header { background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff; padding:16px 0; box-shadow:0 4px 12px rgba(0,0,0,.15); position:relative; z-index:100; }    .app-header .container { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
     .app-header .logo { display:flex; align-items:center; gap:10px; font-size:20px; font-weight:700; }
     .app-header .logo i { font-size:28px; }
     .app-header .header-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
@@ -21,8 +20,7 @@
     .app-header .header-actions select:hover, .app-header .header-actions button:hover { background:rgba(255,255,255,.30); }
     .app-header .header-actions select option { color:#1a2332; }
     .app-header .user-badge { background:rgba(255,255,255,.20); padding:4px 14px; border-radius:20px; font-size:13px; }
-    .tabs { display:flex; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); margin:20px 0; flex-wrap:wrap; }
-    .tabs .tab { flex:1; min-width:80px; padding:14px 16px; text-align:center; font-weight:600; font-size:14px; color:#5f6b7a; cursor:pointer; transition:all .25s; border-bottom:3px solid transparent; display:flex; align-items:center; justify-content:center; gap:8px; }
+.tabs { display:flex; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); margin:20px 0; flex-wrap:wrap; position:sticky; top:0; z-index:99; }    .tabs .tab { flex:1; min-width:80px; padding:14px 16px; text-align:center; font-weight:600; font-size:14px; color:#5f6b7a; cursor:pointer; transition:all .25s; border-bottom:3px solid transparent; display:flex; align-items:center; justify-content:center; gap:8px; }
     .tabs .tab:hover { background:#f5f8fa; color:#1a73e8; }
     .tabs .tab.active { color:#1a73e8; border-bottom-color:#1a73e8; background:#f0f7ff; }
     .panel { display:none; animation:fadeIn .3s ease; }
@@ -1164,23 +1162,29 @@ const safetyChecklists = {
       { en: 'Mechanical Lifting', ar: 'الرفع الميكانيكي', icon: 'fa-arrow-up' },
       { en: 'Bypassing Safety Controls', ar: 'تجاوز ضوابط السلامة', icon: 'fa-exclamation-triangle' }
     ],
-    generalHazards: [
-      { en: 'Adequate lighting', ar: 'إضاءة كافية', icon: 'fa-lightbulb' },
-      { en: 'Adequate ventilation', ar: 'تهوية كافية', icon: 'fa-wind' },
-      { en: 'Spill containment available', ar: 'احتواء التسرب متاح', icon: 'fa-oil-can' },
-      { en: 'Fall protection in place', ar: 'حماية من السقوط', icon: 'fa-helmet-safety' },
-      { en: 'Electrical hazards controlled', ar: 'مخاطر الكهرباء مسيطر عليها', icon: 'fa-plug' },
-      { en: 'Fire extinguishers accessible', ar: 'طفايات حريق متاحة', icon: 'fa-fire-extinguisher' },
-      { en: 'Warning signs & barricades in place', ar: 'علامات تحذير وحواجز', icon: 'fa-signs-post' },
-      { en: 'Hydrocarbon leaks controlled', ar: 'تسرب الهيدروكربون مسيطر عليه', icon: 'fa-oil-can' },
-      { en: 'Pressure systems secured', ar: 'أنظمة الضغط مؤمنة', icon: 'fa-gauge-high' },
-      { en: 'Hazardous atmosphere monitored', ar: 'الغلاف الجوي الخطير مراقب', icon: 'fa-radiation' },
-      { en: 'Rotating equipment guarded', ar: 'المعدات الدوارة محمية', icon: 'fa-cogs' },
-      { en: 'Grounding/bonding verified', ar: 'التأريض/الربط مؤكد', icon: 'fa-bolt' },
-      { en: 'Housekeeping', ar: 'النظافة والترتيب', icon: 'fa-broom' },
-      { en: 'Safe Platforms, Scaffolding & Supports', ar: 'منصات وسقالات آمنة', icon: 'fa-layer-group' },
-      { en: 'Equipment in good condition', ar: 'المعدات في حالة جيدة', icon: 'fa-check-circle' }
-    ]
+  generalHazards: [
+  { en: 'Adequate lighting', ar: 'إضاءة كافية', icon: 'fa-lightbulb' },
+  { en: 'Adequate ventilation', ar: 'تهوية كافية', icon: 'fa-wind' },
+  { en: 'Spill containment available', ar: 'احتواء التسرب متاح', icon: 'fa-oil-can' },
+  { en: 'Fall protection & dropped objects control in place', ar: 'حماية من السقوط والتحكم في الأجسام المتساقطة', icon: 'fa-helmet-safety' },
+  { en: 'Electrical hazards controlled', ar: 'مخاطر الكهرباء مسيطر عليها', icon: 'fa-plug' },
+  { en: 'Fire extinguishers & systems accessible and healthy', ar: 'طفايات الحريق والأنظمة متاحة وجاهزة', icon: 'fa-fire-extinguisher' },
+  { en: 'Warning signs & barricades in place', ar: 'علامات تحذير وحواجز', icon: 'fa-signs-post' },
+  { en: 'Hydrocarbon leaks controlled', ar: 'تسرب الهيدروكربون مسيطر عليه', icon: 'fa-oil-can' },
+  { en: 'Pressure systems secured', ar: 'أنظمة الضغط مؤمنة', icon: 'fa-gauge-high' },
+  { en: 'Hazardous atmosphere monitored', ar: 'الغلاف الجوي الخطير مراقب', icon: 'fa-radiation' },
+  { en: 'Rotating equipment guarded', ar: 'المعدات الدوارة محمية', icon: 'fa-cogs' },
+  { en: 'Grounding/bonding verified', ar: 'التأريض/الربط مؤكد', icon: 'fa-bolt' },
+  { en: 'Housekeeping', ar: 'النظافة والترتيب', icon: 'fa-broom' },
+  { en: 'Safe Platforms, Scaffolding & Supports', ar: 'منصات وسقالات آمنة', icon: 'fa-layer-group' },
+  { en: 'Equipment in good condition', ar: 'المعدات في حالة جيدة', icon: 'fa-check-circle' },
+  { en: 'PPE available & adequate', ar: 'معدات الوقاية الشخصية متوفرة ومناسبة', icon: 'fa-vest' },
+  { en: 'Radiation sources controlled', ar: 'مصادر الإشعاع مسيطر عليها', icon: 'fa-radiation' },
+  { en: 'Chemicals controlled & waste disposed properly', ar: 'المواد الكيميائية مسيطر عليها والنفايات تُتخلص بشكل صحيح', icon: 'fa-flask' },
+  { en: 'Noise levels controlled', ar: 'مستويات الضوضاء مسيطر عليها', icon: 'fa-volume-high' },
+  { en: 'Manual handling & hand tools safe', ar: 'المناولة اليدوية والأدوات اليدوية آمنة', icon: 'fa-screwdriver-wrench' },
+  { en: 'Procedures, permits & documents in place', ar: 'الإجراءات والتصاريح والوثائق متوفرة', icon: 'fa-clipboard-list' }
+]
   },
   bbs: {
     ppe: [
@@ -1233,7 +1237,15 @@ function toggleSafetyChecks() {
 function renderSafetyChecks(mode) {
   const container = $('safetyChecksContainer');
   const checks = safetyChecklists[mode] || safetyChecklists.hse;
+  const isReadOnly = (mode === 'bbs');
   let html = '';
+
+  if (isReadOnly) {
+    html += `<div style="background:#e8f0fe;border:1px solid #1a73e8;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#1a73e8;display:flex;align-items:center;gap:8px;">
+      <i class="fas fa-eye"></i>
+      <span><strong>BBS view only</strong> — nothing here is saved. The HSE checklist is what gets submitted.</span>
+    </div>`;
+  }
 
   for (const [category, items] of Object.entries(checks)) {
     const categoryLabel = t(category) || category;
@@ -1244,18 +1256,22 @@ function renderSafetyChecks(mode) {
       </div>`;
 
     items.forEach(item => {
-      // Use localized text based on current language
       const label = currentLang === 'ar' ? item.ar : item.en;
       const icon = item.icon || 'fa-check';
-      const key = category + '_' + item.en.replace(/\s/g, '_'); // key remains English-based
-      const safe = safetyChecksData[key] !== undefined ? safetyChecksData[key] : true;
+      const key = category + '_' + item.en.replace(/\s/g, '_');
+
+      // BBS is inert: always show as "Safe", disabled. HSE uses stored data.
+      const safe = isReadOnly ? true : (safetyChecksData[key] !== undefined ? safetyChecksData[key] : true);
+      const disabled = isReadOnly ? 'disabled' : '';
+      const rowStyle = isReadOnly ? 'opacity:0.7;' : '';
 
       html += `
-        <div class="check-item">
+        <div class="check-item" style="${rowStyle}">
           <i class="fas ${icon}" style="width:20px; color:#1a73e8;"></i>
           <label>${label}</label>
           <label style="font-weight:normal;font-size:12px;">
-            <input type="checkbox" data-key="${key}" ${safe ? 'checked' : ''} onchange="safetyCheckChanged('${key}', this.checked)" />
+            <input type="checkbox" data-key="${key}" ${safe ? 'checked' : ''} ${disabled}
+                   onchange="safetyCheckChanged('${key}', this.checked)" />
             <span style="color:${safe ? '#0f9d58' : '#d32f2f'}">${safe ? t('safe') : t('unsafe')}</span>
           </label>
         </div>
@@ -1267,17 +1283,21 @@ function renderSafetyChecks(mode) {
 
   container.innerHTML = html;
 }
-
 function safetyCheckChanged(key, isSafe) {
+  // BBS view only — ignore any change attempts
+  if ($('safetyMode').value === 'bbs') return;
   safetyChecksData[key] = isSafe;
+
   const container = $('safetyChecksContainer');
   const checkItem = container.querySelector(`[data-key="${key}"]`);
   if (checkItem) {
     const span = checkItem.parentElement.querySelector('span');
-    if (span) { span.textContent = isSafe ? t('safe') : t('unsafe'); span.style.color = isSafe ? '#0f9d58' : '#d32f2f'; }
+    if (span) {
+      span.textContent = isSafe ? t('safe') : t('unsafe');
+      span.style.color = isSafe ? '#0f9d58' : '#d32f2f';
+    }
   }
 }
-
 // ================================================================
 // SUBMIT STOP CARD
 // ================================================================
@@ -1291,9 +1311,10 @@ async function submitStopCard(e) {
   btn.innerHTML = '<span class="spinner"></span> Submitting...';
 
   try {
-    const safetyChecks = {};
-    for (const [key, value] of Object.entries(safetyChecksData)) safetyChecks[key] = value;
-
+   // Always submit HSE data — BBS is view‑only and never contributes
+const safetyChecks = {};
+for (const [key, value] of Object.entries(safetyChecksData)) safetyChecks[key] = value;
+const savedMode = 'hse';
     const clientId = generateUUID();   // unique per card
     const data = {
       clientId,
@@ -1569,8 +1590,11 @@ function renderMyCards(container, cards) {
       imageSrc = `data:image/jpeg;base64,${card.imageBase64}`;
     }
     const obsText = card.observation || card.Observation || 'No description';
-    const authType = card.AuthType || (card.reporterId && card.reporterId.trim() !== '' ? 'worker' : 'guest');
-
+// FIXED
+const authType = card.AuthType ||
+  ((card.ReporterId || card.reporterId || '').trim() &&
+   currentUser.id &&
+   (card.ReporterId || card.reporterId || '').trim() === currentUser.id ? 'worker' : 'guest');
     html += `<div class="stop-card-item">
       <div class="top-row">
         <div class="obs-text">${escHtml(obsText)}</div>
@@ -1628,8 +1652,10 @@ function renderCloudCards(container, cards) {
     const approval = card.Approval || 'pending';
     const approvalBadge = `<span class="badge badge-approval-${approval}">${approval}</span>`;
     const hasCA = card.CorrectiveActionImage || card.CorrectiveActionDescription;
-    const authType = card.AuthType || (card.ReporterId && card.ReporterId.trim() !== '' ? 'worker' : 'guest');
-    const canAddCA = (isHSEQ) || (userDept && respDept && userDept === respDept);
+// FIXED
+const authType = (card.AuthType || card.authType || 'guest').toLowerCase();
+
+       const canAddCA = (isHSEQ) || (userDept && respDept && userDept === respDept);
 
     html += `<div class="stop-card-item">
       <div class="top-row">
