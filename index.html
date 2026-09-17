@@ -1149,7 +1149,12 @@ function removeCAFile() { caFileBase64 = null; $('caUploadPreview').innerHTML=''
 // ================================================================
 // SAFETY CHECKS
 // ================================================================
+// ================================================================
+// HAZARD OBSERVATION CARD – RELEVANT CATEGORIES (F.S.OO.007)
+// ================================================================
+
 const safetyChecklists = {
+
   hse: {
     lifeSavingRules: [
       { en: 'Work Authorization', ar: 'تفويض العمل', icon: 'fa-file-signature' },
@@ -1162,28 +1167,37 @@ const safetyChecklists = {
       { en: 'Mechanical Lifting', ar: 'الرفع الميكانيكي', icon: 'fa-arrow-up' },
       { en: 'Bypassing Safety Controls', ar: 'تجاوز ضوابط السلامة', icon: 'fa-exclamation-triangle' }
     ],
-  generalHazards: [
-  { en: 'Adequate lighting', ar: 'إضاءة كافية', icon: 'fa-lightbulb' },
-  { en: 'Adequate ventilation', ar: 'تهوية كافية', icon: 'fa-wind' },
-  { en: 'Spill containment available', ar: 'احتواء التسرب متاح', icon: 'fa-oil-can' },
-  { en: 'Fall protection & dropped objects control in place', ar: 'حماية من السقوط والتحكم في الأجسام المتساقطة', icon: 'fa-helmet-safety' },
-  { en: 'Electrical hazards controlled', ar: 'مخاطر الكهرباء مسيطر عليها', icon: 'fa-plug' },
-  { en: 'Fire extinguishers & systems accessible and healthy', ar: 'طفايات الحريق والأنظمة متاحة وجاهزة', icon: 'fa-fire-extinguisher' },
-  { en: 'Warning signs & barricades in place', ar: 'علامات تحذير وحواجز', icon: 'fa-signs-post' },
-  { en: 'Hydrocarbon leaks controlled', ar: 'تسرب الهيدروكربون مسيطر عليه', icon: 'fa-oil-can' },
-  { en: 'Pressure systems secured', ar: 'أنظمة الضغط مؤمنة', icon: 'fa-gauge-high' },
-  { en: 'Hazardous atmosphere monitored', ar: 'الغلاف الجوي الخطير مراقب', icon: 'fa-radiation' },
-  { en: 'Rotating equipment guarded', ar: 'المعدات الدوارة محمية', icon: 'fa-cogs' },
-  { en: 'Grounding/bonding verified', ar: 'التأريض/الربط مؤكد', icon: 'fa-bolt' },
-  { en: 'Housekeeping', ar: 'النظافة والترتيب', icon: 'fa-broom' },
-  { en: 'Safe Platforms, Scaffolding & Supports', ar: 'منصات وسقالات آمنة', icon: 'fa-layer-group' },
-  { en: 'Equipment in good condition', ar: 'المعدات في حالة جيدة', icon: 'fa-check-circle' },
-  { en: 'PPE available & adequate', ar: 'معدات الوقاية الشخصية متوفرة ومناسبة', icon: 'fa-vest' },
-  { en: 'Radiation sources controlled', ar: 'مصادر الإشعاع مسيطر عليها', icon: 'fa-radiation' },
-  { en: 'Chemicals controlled & waste disposed properly', ar: 'المواد الكيميائية مسيطر عليها والنفايات تُتخلص بشكل صحيح', icon: 'fa-flask' },
-  { en: 'Noise levels controlled', ar: 'مستويات الضوضاء مسيطر عليها', icon: 'fa-volume-high' },
-  { en: 'Manual handling & hand tools safe', ar: 'المناولة اليدوية والأدوات اليدوية آمنة', icon: 'fa-screwdriver-wrench' },
-  { en: 'Procedures, permits & documents in place', ar: 'الإجراءات والتصاريح والوثائق متوفرة', icon: 'fa-clipboard-list' }
+ generalHazards: [
+  { en: 'Access & Egress',         ar: 'الممرات والطرقات',         icon: 'fa-door-open' },
+  { en: 'Pressurized Cylinders',   ar: 'اسطوانات مضغوطة',          icon: 'fa-gas-pump' },
+  { en: 'Electricity',             ar: 'الكهرباء',                 icon: 'fa-bolt' },
+  { en: 'Environmental Factors',   ar: 'عوامل بيئية',              icon: 'fa-leaf' },
+  { en: 'Falling Objects',         ar: 'سقوط أجسام',               icon: 'fa-arrow-down' },
+  { en: 'Security',                ar: 'الأمن',                    icon: 'fa-shield-halved' },
+  { en: 'Hand & Power Tools',      ar: 'أدوات يدوية وكهربائية',    icon: 'fa-screwdriver-wrench' },
+  { en: 'Hazardous Substances',    ar: 'مواد خطرة',                icon: 'fa-flask' },
+  { en: 'Housekeeping',            ar: 'النظافة والترتيب',         icon: 'fa-broom' },
+  { en: 'Machinery',               ar: 'الماكينات',                icon: 'fa-cogs' },
+  { en: 'Manual handling',         ar: 'المناولة اليدوية',         icon: 'fa-dumbbell' },
+  { en: 'Mechanical handling',     ar: 'المناولة الميكانيكية',     icon: 'fa-truck-ramp-box' },
+  { en: 'Smoking',                 ar: 'التدخين',                  icon: 'fa-smoking' },
+  { en: 'PPE',                     ar: 'مهمات الوقاية الشخصية',    icon: 'fa-vest' },
+  { en: 'Pressure Systems',        ar: 'أنظمة الضغط',              icon: 'fa-gauge-high' },
+  { en: 'Radiation',               ar: 'الإشعاع',                  icon: 'fa-radiation' },
+  { en: 'Slips, Trips and Falls',  ar: 'الانزلاق والتعثر والسقوط', icon: 'fa-person-falling' },
+  { en: 'Storage Systems',         ar: 'أنظمة التخزين',            icon: 'fa-warehouse' },
+  { en: 'Defective Equipment',     ar: 'المعدات التالفة',          icon: 'fa-triangle-exclamation' },
+  { en: 'Unsafe Practices',        ar: 'تصرفات غير آمنة',          icon: 'fa-user-xmark' },
+  { en: 'Vehicle Operation',       ar: 'تشغيل المركبات',           icon: 'fa-car' },
+  { en: 'Work at height',          ar: 'العمل على ارتفاع',         icon: 'fa-mountain' },
+  { en: 'Work below ground level', ar: 'العمل تحت سطح الأرض',      icon: 'fa-arrow-down-long' },
+  { en: 'Lifting Operations',      ar: 'عمليات الرفع',             icon: 'fa-arrow-up' },
+  { en: 'Confined Space',          ar: 'أماكن محصورة',             icon: 'fa-archway' },
+  { en: 'Leaks',                   ar: 'التسريبات',                icon: 'fa-droplet' },
+  { en: 'Health and Hygiene',      ar: 'الصحة والنظافة',           icon: 'fa-hand-sparkles' },
+  { en: 'Fire Hazard',             ar: 'خطر الحريق',               icon: 'fa-fire' },
+  { en: 'Scaffolding',             ar: 'السقالات',                 icon: 'fa-layer-group' },
+  { en: 'Permits System',          ar: 'تصاريح العمل',             icon: 'fa-clipboard-list' }
 ]
   },
   bbs: {
@@ -1676,8 +1690,9 @@ const authType = (card.AuthType || card.authType || 'guest').toLowerCase();
       </div>
       <div class="actions">
         ${card.ImageUrl ? `<a href="${card.ImageUrl}" target="_blank" class="btn btn-sm btn-outline"><i class="fas fa-image"></i> ${t('viewImage')}</a>` : ''}
-        <button class="btn btn-sm btn-success" onclick="generatePDF('cloud', ${index})"><i class="fas fa-file-pdf"></i> ${t('downloadPDF')}</button>
-        ${isHSEQ ? `<button class="btn btn-sm btn-primary" onclick="openFullEditModalCloud(${index})"><i class="fas fa-edit"></i> ${t('edit')}</button>` : ''}
+<button class="btn btn-sm btn-success" onclick="generatePDF('cloud', ${index})"><i class="fas fa-file-pdf"></i> ${t('downloadPDF')}</button>
+<button class="btn btn-sm btn-primary" onclick="generatePDFNew('cloud', ${index})" title="Print in F.S.OO.007 form layout"><i class="fas fa-file-pdf"></i> Form PDF</button>
+      ${isHSEQ ? `<button class="btn btn-sm btn-primary" onclick="openFullEditModalCloud(${index})"><i class="fas fa-edit"></i> ${t('edit')}</button>` : ''}
         ${isHSEQ ? `<button class="btn btn-sm ${approval === 'approved' ? 'btn-danger' : 'btn-success'}" onclick="toggleApprovalCloud(${index})"><i class="fas fa-check-double"></i> ${approval === 'approved' ? t('unapprove') : t('approve')}</button>` : ''}
         
 ${isHSEQ ? `<button class="btn btn-sm btn-danger" onclick="deleteCloudCard(${index})"><i class="fas fa-trash-alt"></i> Delete</button>` : ''}
@@ -2512,7 +2527,211 @@ caHtml += `<p><strong>${t('date')}:</strong> ${formatSimpleDateTime(card.Correct
   win.document.close();
   win.onload = function() { setTimeout(function() { win.print(); }, 800); };
 }
+// ================================================================
+// PDF OPTION 2 – HAZARD OBSERVATION CARD FORM (F.S.OO.007 style)
+// ================================================================
+function generatePDFNew(type, index) {
+  const cards = type === 'my' ? (window._myCards || []) : (window._cloudCards || []);
+  const card = cards[index];
+  if (!card) return;
 
+  const reporter     = card.Reporter || card.reporter || '';
+  const reporterId   = card.ReporterId || card.reporterId || '';
+  const jobTitle     = card.Job || card.job || '';
+  const area         = card.Area || card.area || '';
+  const location     = (card.Location || card.location || '') || area;
+  const ts           = formatSimpleDateTime(card.Timestamp || card.timestamp);
+  const obsType      = (card.ObservationType || card.obsType || '').toLowerCase();
+  const observation  = card.Observation || card.observation || '';
+  const recommendation = card.Recommendation || card.recommendation || '';
+  const respDept     = card.ResponsibleDepartment || card.respDept || '';
+  const targetDate   = card.TargetDate || card.targetDate || '';
+  const imageUrl     = card.ImageUrl || card.imageUrl || '';
+  const caImage      = card.CorrectiveActionImage || '';
+  const caDescription = card.CorrectiveActionDescription || '';
+  const caBy         = card.CorrectiveActionBy || '';
+  const caDate       = card.CorrectiveActionDate ? formatSimpleDateTime(card.CorrectiveActionDate) : '';
+
+  let checks = {};
+  try { checks = JSON.parse(card.SafetyChecks || '{}'); } catch(e) {}
+
+  const isA = obsType === 'unsafe_act';
+  const isN = obsType === 'near_miss';
+  const isC = obsType === 'unsafe_condition';
+  const isS = obsType === 'positive';
+
+  // Small square box with optional X inside
+  const box = (letter, checked) =>
+    `<span style="display:inline-block;width:13px;height:13px;border:1.2px solid #333;text-align:center;line-height:12px;font-weight:bold;font-size:9px;vertical-align:middle;margin-right:4px;background:${checked ? '#1a73e8' : '#fff'};color:${checked ? '#fff' : '#333'};">${checked ? 'X' : ''}</span><span style="vertical-align:middle;">${letter}</span>`;
+
+  const categories = safetyChecklists.hse.generalHazards;
+  const lsr        = safetyChecklists.hse.lifeSavingRules;
+
+  // Category checkbox row builder (with Arabic label on the right)
+  const catItemHtml = (item, categoryName) => {
+    const key = categoryName + '_' + item.en.replace(/\s/g, '_');
+    const affected = checks[key] === false;   // unsafe → counted as "affected"
+    return `<div style="display:flex;align-items:center;gap:5px;font-size:9px;margin-bottom:3px;break-inside:avoid;line-height:1.3;">
+      <span style="display:inline-block;width:11px;height:11px;border:1.2px solid #333;text-align:center;line-height:10px;font-weight:bold;font-size:8px;color:#fff;background:${affected ? '#1a73e8' : '#fff'};">${affected ? 'X' : ''}</span>
+      <span style="flex:1;">${item.en}</span>
+      ${item.ar ? `<span style="color:#666;font-size:8px;direction:rtl;">${item.ar}</span>` : ''}
+    </div>`;
+  };
+
+  const catHtml = categories.map(it => catItemHtml(it, 'generalHazards')).join('');
+  const lsrHtml = lsr.map(item => {
+    const key = 'lifeSavingRules_' + item.en.replace(/\s/g, '_');
+    const affected = checks[key] === false;
+    return `<div style="display:flex;align-items:center;gap:5px;font-size:9.5px;">
+      <span style="display:inline-block;width:11px;height:11px;border:1.2px solid #333;text-align:center;line-height:10px;font-weight:bold;font-size:8px;color:#fff;background:${affected ? '#1a73e8' : '#fff'};">${affected ? 'X' : ''}</span>
+      <span>${item.en}</span>
+    </div>`;
+  }).join('');
+
+  const logoUrl  = companyConfig.logo || '';
+  const logoHtml = logoUrl ? `<img src="${logoUrl}" style="max-height:50px;max-width:100%;" alt="Logo">` : '';
+  const code     = companyConfig.code || 'F.S.OO.007';
+  const title    = companyConfig.pdfTitle || 'Hazard Observation Card';
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>${title}</title>
+<style>
+  @page { margin: 0.4in; size: A4 portrait; }
+  * { box-sizing: border-box; }
+  body { font-family:'Segoe UI', Arial, sans-serif; font-size:10px; color:#1a2332; margin:0; padding:0; background:#fff; }
+  .outer { width:100%; border-collapse:collapse; border:1.5px solid #1a2332; margin-bottom:10px; }
+  .outer td { border:1px solid #1a2332; padding:6px 10px; font-size:10px; vertical-align:middle; }
+  .outer .logo-cell { text-align:center; vertical-align:middle; width:30%; }
+  .outer .logo-cell img { max-height:48px; max-width:100%; }
+  .outer .lbl { font-weight:bold; }
+  .outer .small { font-size:9px; }
+  .card { border:2px solid #1a2332; }
+  .card-head { text-align:center; padding:12px 10px 8px; border-bottom:2px solid #1a2332; }
+  .card-head img { max-height:55px; margin-bottom:6px; }
+  .card-title { font-size:18px; font-weight:bold; letter-spacing:0.5px; }
+  table.grid { width:100%; border-collapse:collapse; }
+  table.grid > tbody > tr > td { border:1px solid #1a2332; padding:6px 8px; vertical-align:top; font-size:9.5px; }
+  .label-cell { background:#eef2f7; font-weight:bold; width:16%; font-size:10px; text-align:center; vertical-align:middle !important; }
+  .label-cell .ar { display:block; font-weight:normal; font-size:9px; direction:rtl; margin-top:2px; }
+  .section-bar { background:#1a2332; color:#fff; font-weight:bold; padding:5px 10px; font-size:10px; text-align:center; border-top:1px solid #1a2332; border-bottom:1px solid #1a2332; }
+  .category-wrap { padding:8px 12px; column-count:2; column-gap:24px; }
+  .lsr-wrap { padding:8px 12px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px 14px; }
+  .photo-cell { width:32%; text-align:center; vertical-align:middle !important; background:#fafbfc; }
+  .photo-cell img { max-width:100%; max-height:110px; object-fit:contain; }
+  .photo-label { font-size:8px; color:#888; font-style:italic; margin-bottom:4px; }
+  .small-row td { height:34px; }
+  .tiny-row td { height:24px; }
+</style></head><body>
+
+<table class="outer">
+  <tr>
+<td class="lbl" style="width:70%;">${escHtml(companyConfig.companyName || currentUser.companyName || '')}</td>
+    <td class="logo-cell" rowspan="3">${logoHtml}</td>
+  </tr>
+  <tr>
+    <td class="small">DEPARTMENT: <b>HSE</b> &nbsp;&nbsp;|&nbsp;&nbsp; FORM CODE: <b>${code}</b></td>
+  </tr>
+  <tr>
+  <td class="small">TITLE: <b>${escHtml(title)}</b> &nbsp;&nbsp;|&nbsp;&nbsp; REV. NUMBER: <b>01</b> &nbsp;&nbsp;|&nbsp;&nbsp; PAGE: <b style="color:#1a73e8;">1 OF 1</b></td>
+</tr>
+</table>
+
+<div class="card">
+  <div class="card-head">
+    ${logoHtml}
+    <div class="card-title">${escHtml(title)}</div>
+  </div>
+
+  <table class="grid">
+    <tr>
+      <td class="label-cell">Location<span class="ar">الموقع</span></td>
+      <td>${location}${area && area !== location ? ' – ' + area : ''}</td>
+      <td class="label-cell" style="width:16%;">Date<span class="ar">التاريخ</span></td>
+      <td>${ts}</td>
+    </tr>
+    <tr>
+      <td class="label-cell">Name<span class="ar">الاسم</span></td>
+      <td>
+        ${reporter}${reporterId ? ' (' + reporterId + ')' : ''}
+        ${jobTitle ? '<br><span style="font-size:8px;color:#666;">' + jobTitle + '</span>' : ''}
+      </td>
+      <td class="label-cell">Classification<span class="ar">التصنيف</span></td>
+      <td style="padding:4px 6px;">
+        <table style="width:100%; border-collapse:collapse;">
+          <tr>
+            <td style="border:none;padding:2px 0;font-size:9px;">${box('A', isA)} Unsafe Act</td>
+            <td style="border:none;padding:2px 0;font-size:9px;">${box('C', isC)} Unsafe Condition</td>
+          </tr>
+          <tr>
+            <td style="border:none;padding:2px 0;font-size:9px;">${box('N', isN)} Near Miss</td>
+            <td style="border:none;padding:2px 0;font-size:9px;">${box('S', isS)} Positive observation</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <div class="section-bar">Choose the relevant category &nbsp;|&nbsp; اختر الفئة المناسبة</div>
+  <div class="category-wrap">${catHtml}</div>
+
+  <div class="section-bar">Life Saving Rules &nbsp;|&nbsp; قواعد الحفاظ على الحياة</div>
+  <div class="lsr-wrap">${lsrHtml}</div>
+
+  <table class="grid" style="border-top:1px solid #1a2332;">
+    <tr>
+      <td class="label-cell">Description<span class="ar">الوصف</span></td>
+      <td style="width:52%; min-height:90px;">${observation || '<span style="color:#999;font-style:italic;">—</span>'}</td>
+      <td class="photo-cell">
+        <div class="photo-label">Observation Photo</div>
+        ${imageUrl ? `<img src="${imageUrl}" alt="Photo">` : '<div style="height:80px;"></div>'}
+      </td>
+    </tr>
+  </table>
+
+  <table class="grid">
+    <tr class="small-row">
+      <td class="label-cell">Action Taken / Recommendation<span class="ar">الإجراء المتخذ / التوصية</span></td>
+      <td>
+        ${recommendation || '<span style="color:#999;font-style:italic;">—</span>'}
+        ${respDept ? '<br><span style="font-size:8.5px;color:#555;">Responsible: <b>' + respDept + '</b></span>' : ''}
+        ${targetDate ? '<br><span style="font-size:8.5px;color:#555;">Target: <b>' + targetDate + '</b></span>' : ''}
+      </td>
+    </tr>
+  </table>
+
+  <table class="grid">
+    <tr>
+      <td class="label-cell">Corrective Action Required<span class="ar">الإجراءات التصحيحية</span></td>
+      <td style="width:52%; min-height:90px;">
+        ${caDescription || '<span style="color:#999;font-style:italic;">—</span>'}
+        ${caBy ? '<br><span style="font-size:8.5px;color:#555;">By: <b>' + caBy + '</b></span>' : ''}
+        ${caDate ? '<br><span style="font-size:8.5px;color:#555;">Date: <b>' + caDate + '</b></span>' : ''}
+      </td>
+      <td class="photo-cell">
+        <div class="photo-label">Corrective Action Photo</div>
+        ${caImage ? `<img src="${caImage}" alt="Corrective">` : '<div style="height:80px;"></div>'}
+      </td>
+    </tr>
+  </table>
+
+ 
+
+   <table class="grid">
+    <tr class="tiny-row">
+      <td class="label-cell">Signature<span class="ar">التوقيع</span></td>
+      <td style="font-weight:bold;font-size:10px;">${escHtml(reporter)}${reporterId ? ' <span style="font-weight:normal;color:#666;font-size:9px;">(' + escHtml(reporterId) + ')</span>' : ''}</td>
+    </tr>
+  </table>
+</div>
+
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { showToast('Please allow popups.', 'error'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.onload = function() { setTimeout(function() { win.print(); }, 800); };
+}
 // ================================================================
 // CHARTS
 // ================================================================
