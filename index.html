@@ -222,6 +222,23 @@
     <input type="text" id="editCAImageCloud" placeholder="https://...">
   </div>
 </div>
+<div class="form-group">
+  <label>Risk Level</label>
+  <select id="editRiskLevelCloud">
+    <option value="">—</option>
+    <option value="Critical">Critical</option>
+    <option value="High">High</option>
+    <option value="Medium">Medium</option>
+    <option value="Low">Low</option>
+  </select>
+</div>
+
+<div class="card" style="margin-top:16px; border:1px solid #dde2e8; background:#f8faff; padding:16px;">
+  <div class="card-title" style="font-size:15px; margin-bottom:12px;">
+    <i class="fas fa-check-double"></i> Hazard Categories &amp; Life Saving Rules
+  </div>
+  <div id="editSafetyChecksCloud" style="max-height:400px; overflow-y:auto;"></div>
+</div>
       <button class="btn btn-primary btn-block" onclick="saveFullEditCloud()"><i class="fas fa-save"></i> <span data-i18n="save">Save</span></button>
       <p id="fullEditErrorCloud" style="color:red; margin-top:8px; display:none;"></p>
     </div>
@@ -597,7 +614,7 @@
 // ================================================================
 // CONFIG & GLOBAL STATE
 // ================================================================
-const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyC92O7GvzJ3iv_IysXUWIHqGcJZ5ZD6TNOvycmKL_Re_7MCMMdRrEGr-W4OZD0GdUY/exec'; // <-- REPLACE
+const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztRUD0L3PSACGBtt780Fw-pCfdzc07Y952qfHuqQl6extGMtq71xjeox9Ub0U7HB7Q/exec'; // <-- REPLACE
 
 let currentLang = 'en';
 let currentUser = { name: 'Guest', id: '', loggedIn: false, role: 'worker', companyId: '', companyName: '', department: '' };
@@ -1422,7 +1439,6 @@ function toggleSafetyChecks() {
 
 function renderSafetyChecks(mode) {
   const container = $('safetyChecksContainer');
-  const checks = safetyChecklists[mode] || safetyChecklists.hse;
   const isReadOnly = (mode === 'bbs');
   let html = '';
 
@@ -1433,41 +1449,110 @@ function renderSafetyChecks(mode) {
     </div>`;
   }
 
-  for (const [category, items] of Object.entries(checks)) {
-    const categoryLabel = t(category) || category;
-    html += `<div class="check-section">
+  const renderSection = (titleKey, items, categoryKey) => {
+    let s = `<div class="check-section">
       <div class="section-title">
-        <span>${categoryLabel}</span>
+        <span>${t(titleKey) || titleKey}</span>
         <span class="text-muted text-sm">${t('safe')} / ${t('unsafe')}</span>
       </div>`;
-
     items.forEach(item => {
       const label = currentLang === 'ar' ? item.ar : item.en;
       const icon = item.icon || 'fa-check';
-      const key = category + '_' + item.en.replace(/\s/g, '_');
-
-      // BBS is inert: always show as "Safe", disabled. HSE uses stored data.
+      const key = categoryKey + '_' + item.en.replace(/\s/g, '_');
       const safe = isReadOnly ? true : (safetyChecksData[key] !== undefined ? safetyChecksData[key] : true);
       const disabled = isReadOnly ? 'disabled' : '';
       const rowStyle = isReadOnly ? 'opacity:0.7;' : '';
-
-      html += `
-        <div class="check-item" style="${rowStyle}">
-          <i class="fas ${icon}" style="width:20px; color:#1a73e8;"></i>
-          <label>${label}</label>
-          <label style="font-weight:normal;font-size:12px;">
-            <input type="checkbox" data-key="${key}" ${safe ? 'checked' : ''} ${disabled}
-                   onchange="safetyCheckChanged('${key}', this.checked)" />
-            <span style="color:${safe ? '#0f9d58' : '#d32f2f'}">${safe ? t('safe') : t('unsafe')}</span>
-          </label>
-        </div>
-      `;
+      s += `<div class="check-item" style="${rowStyle}">
+        <i class="fas ${icon}" style="width:20px; color:#1a73e8;"></i>
+        <label>${label}</label>
+        <label style="font-weight:normal;font-size:12px;">
+          <input type="checkbox" data-key="${key}" ${safe ? 'checked' : ''} ${disabled}
+                 onchange="safetyCheckChanged('${key}', this.checked)" />
+          <span style="color:${safe ? '#0f9d58' : '#d32f2f'}">${safe ? t('safe') : t('unsafe')}</span>
+        </label>
+      </div>`;
     });
+    s += `</div>`;
+    return s;
+  };
 
-    html += `</div>`;
+  const renderRiskLevel = () => {
+    const levels = ['Critical', 'High', 'Medium', 'Low'];
+    const colors = {
+      Critical: { bg: '#7f0000', border: '#7f0000', text: '#ffffff' },
+      High:     { bg: '#fce8e8', border: '#d32f2f', text: '#b71c1c' },
+      Medium:   { bg: '#fef3e0', border: '#e37400', text: '#e37400' },
+      Low:      { bg: '#e6f4ea', border: '#0f9d58', text: '#0f9d58' }
+    };
+    const current = window._selectedRiskLevel || '';
+    let s = `<div class="check-section" style="border:1.5px solid #f0d9b5; background:#fffbf0;">
+      <div class="section-title">
+        <span><i class="fas fa-triangle-exclamation" style="color:#e37400;margin-right:6px;"></i>Risk Level</span>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; padding:6px 0;">`;
+    levels.forEach(lvl => {
+      const c = colors[lvl];
+      const checked = current === lvl;
+      const disabled = isReadOnly ? 'disabled' : '';
+      s += `<label style="display:flex; align-items:center; gap:6px; padding:8px 18px;
+              border:2px solid ${checked ? c.border : '#dde2e8'}; border-radius:22px;
+              cursor:${isReadOnly ? 'not-allowed' : 'pointer'};
+              background:${checked ? c.bg : '#fff'};
+              color:${checked ? c.text : '#3d4a5a'};
+              font-weight:600; font-size:13px;
+              opacity:${isReadOnly ? 0.7 : 1}; transition:all .2s;">
+        <input type="radio" name="riskLevelRadio" value="${lvl}"
+               ${checked ? 'checked' : ''} ${disabled}
+               onchange="onRiskLevelChange('${lvl}')"
+               style="accent-color:${c.border}; margin:0;">
+        ${lvl}
+      </label>`;
+    });
+    s += `</div></div>`;
+    return s;
+  };
+
+  if (mode === 'hse') {
+    html += renderSection('lifeSavingRules', safetyChecklists.hse.lifeSavingRules, 'lifeSavingRules');
+    html += renderRiskLevel();
+    html += renderSection('generalHazards',  safetyChecklists.hse.generalHazards,  'generalHazards');
+  } else {
+    // BBS mode – own categories, then risk level at the bottom
+    for (const [cat, items] of Object.entries(safetyChecklists.bbs)) {
+      html += renderSection(cat, items, cat);
+    }
+    html += renderRiskLevel();
   }
 
   container.innerHTML = html;
+}
+
+function onRiskLevelChange(level) {
+  if ($('safetyMode').value === 'bbs') return;   // BBS is view-only
+  window._selectedRiskLevel = level;
+
+  const colors = {
+    Critical: { bg: '#7f0000', border: '#7f0000', text: '#ffffff' },
+    High:     { bg: '#fce8e8', border: '#d32f2f', text: '#b71c1c' },
+    Medium:   { bg: '#fef3e0', border: '#e37400', text: '#e37400' },
+    Low:      { bg: '#e6f4ea', border: '#0f9d58', text: '#0f9d58' }
+  };
+  document.querySelectorAll('input[name="riskLevelRadio"]').forEach(r => {
+    const label = r.parentElement;
+    const checked = r.value === level;
+    const c = colors[r.value];
+    if (checked) {
+      r.checked = true;
+      label.style.borderColor = c.border;
+      label.style.background  = c.bg;
+      label.style.color       = c.text;
+    } else {
+      r.checked = false;
+      label.style.borderColor = '#dde2e8';
+      label.style.background  = '#fff';
+      label.style.color       = '#3d4a5a';
+    }
+  });
 }
 function safetyCheckChanged(key, isSafe) {
   // BBS view only — ignore any change attempts
@@ -1519,7 +1604,9 @@ const savedMode = 'hse';
       respDept: $('respDept').value,
       timestamp: new Date().toISOString(),
       safetyChecks: JSON.stringify(safetyChecks),
-      imageUrl: ''
+      imageUrl: '',
+      riskLevel: window._selectedRiskLevel || '',
+
     };
 
     if (!data.reporter || !data.area || !data.location || !data.observation || !data.obsType) {
@@ -1861,6 +1948,7 @@ const authType = (card.AuthType || card.authType || 'guest').toLowerCase();
         ${hasCA ? `<span class="badge badge-warning"><i class="fas fa-check"></i> ${t('correctiveActionAdded')}</span>` : ''}
       </div>
       <div class="actions">
+        ${getRiskBadge(card.RiskLevel)}
         ${card.ImageUrl ? `<a href="${card.ImageUrl}" target="_blank" class="btn btn-sm btn-outline"><i class="fas fa-image"></i> ${t('viewImage')}</a>` : ''}
 <button class="btn btn-sm btn-success" onclick="generatePDF('cloud', ${index})"><i class="fas fa-file-pdf"></i> ${t('downloadPDF')}</button>
 <button class="btn btn-sm btn-primary" onclick="generatePDFNew('cloud', ${index})" title="Print in F.S.OO.007 form layout"><i class="fas fa-file-pdf"></i> Form PDF</button>
@@ -2048,6 +2136,10 @@ function openFullEditModalCloud(index) {
 
   $('fullEditModalCloud').classList.add('active');
   $('fullEditErrorCloud').style.display = 'none';
+  let checks = {};
+try { checks = JSON.parse(card.SafetyChecks || '{}'); } catch(e) {}
+renderEditSafetyChecks('editSafetyChecksCloud', checks);
+$('editRiskLevelCloud').value = card.RiskLevel || '';
 }
 async function saveFullEditCloud() {
   const data = {
@@ -2071,8 +2163,10 @@ async function saveFullEditCloud() {
     caBy:           $('editCAByCloud').value.trim(),
     caDate:         fromDateTimeLocalValue($('editCADateCloud').value),
     caImage:        $('editCAImageCloud').value.trim(),
+    riskLevel:    $('editRiskLevelCloud').value,
+safetyChecks: JSON.stringify(getEditedSafetyChecks('editSafetyChecksCloud')),
   };
-
+ 
   const result = await apiCall('updateFullObservation', {
     rowIndex: editingRowIndex,
     observationsSheetId: companyConfig.observationsSheetId,
@@ -2555,7 +2649,15 @@ if (card.SafetyChecks) {
 } else {
   safetyHtml = '<p style="font-size:10px;color:#999;">No safety checks</p>';
 }
-
+const riskLevel = card.RiskLevel || '';
+let riskHtml = '';
+if (riskLevel) {
+  const c = { critical:'#7f0000', high:'#d32f2f', medium:'#e37400', low:'#0f9d58' }[riskLevel.toLowerCase()] || '#666';
+  riskHtml = `<div style="margin-top:6px; padding:6px 10px; border:1px solid #e0e7ef; border-radius:4px; background:#fafbfc; font-size:9px;">
+    <strong>Risk Level:</strong>
+    <span style="display:inline-block; padding:2px 12px; border-radius:12px; background:${c}; color:#fff; font-weight:bold; margin-left:6px;">${riskLevel}</span>
+  </div>`;
+}
    // Recommendations & Target Date
  let recHtml = '';
 if (card.Recommendation || card.recommendation) {
@@ -2690,7 +2792,7 @@ caHtml += `<p><strong>${t('date')}:</strong> ${formatSimpleDateTime(card.Correct
     <div class="title">${t('safetyChecks')}</div>
     ${safetyHtml}
   </div>
-
+  
   <div style="margin-top:6px;">
     <div style="font-size:10px;font-weight:bold;color:#1a73e8;margin-bottom:4px;">IMMEDIATE ACTIONS</div>
     <div class="actions-row">
@@ -2775,7 +2877,24 @@ function generatePDFNew(type, index) {
       <span>${item.en}</span>
     </div>`;
   }).join('');
-
+   const riskLevel = card.RiskLevel || '';
+const riskColors = {
+  critical: '#7f0000',
+  high:     '#d32f2f',
+  medium:   '#e37400',
+  low:      '#0f9d58'
+};
+const riskRowHtml = ['Critical','High','Medium','Low'].map(lvl => {
+  const checked = riskLevel.toLowerCase() === lvl.toLowerCase();
+  const c = riskColors[lvl.toLowerCase()];
+  return `<span style="display:inline-flex; align-items:center; gap:6px; padding:4px 14px;
+    border:1.5px solid ${checked ? c : '#ccc'}; border-radius:18px;
+    font-size:10px; font-weight:${checked ? 'bold' : 'normal'};
+    background:${checked ? c : '#fff'}; color:${checked ? '#fff' : '#666'};">
+    <span style="display:inline-block; width:9px; height:9px; border:1px solid ${checked ? '#fff' : '#999'}; border-radius:50%; background:${checked ? '#fff' : 'transparent'};"></span>
+    ${lvl}
+  </span>`;
+}).join('');
   const logoUrl  = companyConfig.logo || '';
   const logoHtml = logoUrl ? `<img src="${logoUrl}" style="max-height:50px;max-width:100%;" alt="Logo">` : '';
   const code     = companyConfig.code || 'F.S.OO.007';
@@ -2864,7 +2983,8 @@ function generatePDFNew(type, index) {
 
   <div class="section-bar">Life Saving Rules &nbsp;|&nbsp; قواعد الحفاظ على الحياة</div>
   <div class="lsr-wrap">${lsrHtml}</div>
-
+   <div class="section-bar">Risk Level &nbsp;|&nbsp; مستوى الخطورة</div>
+<div style="padding:8px 14px; display:flex; gap:10px; flex-wrap:wrap;">${riskRowHtml}</div>
   <table class="grid" style="border-top:1px solid #1a2332;">
     <tr>
       <td class="label-cell">Description<span class="ar">الوصف</span></td>
@@ -3687,7 +3807,72 @@ function buildSafetyCheckChartData(cards) {
   return { lsr, gh };
 }
 
+// ================================================================
+// SAFETY-CHECKS EDITOR (HSEQ modal)
+// ================================================================
+function renderEditSafetyChecks(containerId, checks) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
 
+  const row = (category, item) => {
+    const key = category + '_' + item.en.replace(/\s/g, '_');
+    const safe = checks[key] !== undefined ? checks[key] : true;
+    return `<div class="check-item">
+      <label style="flex:1;font-size:12.5px;">${item.en}</label>
+      <label style="font-weight:normal;font-size:12px;">
+        <input type="checkbox" data-edit-key="${key}" ${safe ? 'checked' : ''}
+               onchange="onEditCheckChange('${containerId}', '${key}', this.checked)">
+        <span style="color:${safe ? '#0f9d58' : '#d32f2f'}">${safe ? 'Safe' : 'Unsafe'}</span>
+      </label>
+    </div>`;
+  };
+
+  let html = '';
+
+  html += `<div class="check-section">
+    <div class="section-title"><span>Life Saving Rules</span></div>`;
+  safetyChecklists.hse.lifeSavingRules.forEach(it => { html += row('lifeSavingRules', it); });
+  html += `</div>`;
+
+  html += `<div class="check-section">
+    <div class="section-title"><span>General Hazards</span></div>`;
+  safetyChecklists.hse.generalHazards.forEach(it => { html += row('generalHazards', it); });
+  html += `</div>`;
+
+  container.innerHTML = html;
+  container._checks = JSON.parse(JSON.stringify(checks || {}));
+}
+
+function onEditCheckChange(containerId, key, isSafe) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!container._checks) container._checks = {};
+  container._checks[key] = isSafe;
+  const cb = container.querySelector(`[data-edit-key="${key}"]`);
+  if (cb) {
+    const span = cb.parentElement.querySelector('span');
+    if (span) {
+      span.textContent = isSafe ? 'Safe' : 'Unsafe';
+      span.style.color = isSafe ? '#0f9d58' : '#d32f2f';
+    }
+  }
+}
+
+function getEditedSafetyChecks(containerId) {
+  const container = document.getElementById(containerId);
+  return container && container._checks ? container._checks : {};
+}
+function getRiskBadge(level) {
+  if (!level) return '';
+  const map = {
+    critical: { bg: '#7f0000', color: '#fff' },
+    high:     { bg: '#fce8e8', color: '#b71c1c' },
+    medium:   { bg: '#fef3e0', color: '#e37400' },
+    low:      { bg: '#e6f4ea', color: '#0f9d58' }
+  };
+  const s = map[level.toLowerCase()] || { bg: '#eef2f7', color: '#3d4a5a' };
+  return `<span class="badge" style="background:${s.bg};color:${s.color};font-weight:700;">${level}</span>`;
+}
 // ================================================================
 // INIT
 // ================================================================
