@@ -9,6 +9,101 @@
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* Observation detail modal */
+#observationDetailModal .modal-content {
+  padding: 0;
+  overflow: hidden;
+}
+.odm-card {
+  background: #fff;
+  border: 1px solid #e0e7ef;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.03);
+}
+.odm-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8896a8;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 6px;
+}
+.odm-card-label i { color: #1a73e8; margin-right: 4px; }
+.odm-card-value {
+  font-size: 14px;
+  color: #1a2332;
+  word-break: break-word;
+  line-height: 1.4;
+}
+.odm-block {
+  background: #fff;
+  border: 1px solid #e0e7ef;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.03);
+}
+.odm-block-title {
+  background: #f0f4f8;
+  color: #1a2332;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-bottom: 1px solid #e0e7ef;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.odm-block-title i { color: #1a73e8; }
+.odm-section {
+  margin-bottom: 18px;
+}
+.odm-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a73e8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.odm-section-title i {
+  font-size: 14px;
+}
+.odm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.odm-cell {
+  background: #f8faff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid #e8eef7;
+}
+.odm-label {
+  font-size: 11px;
+  color: #8896a8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+.odm-label i {
+  margin-right: 4px;
+}
+.odm-value {
+  font-size: 14px;
+  color: #1a2332;
+  font-weight: 500;
+  word-break: break-word;
+}
+@media (max-width: 600px) {
+  .odm-grid { grid-template-columns: 1fr; }
+}
     /* ===== SAME CSS AS BEFORE – KEPT COMPACT ===== */
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Segoe UI',sans-serif; background:#f0f4f8; color:#1a2332; }
@@ -360,6 +455,15 @@
       <p id="caError" style="color:red; margin-top:8px; display:none;"></p>
     </div>
   </div>
+
+  <!-- Observation Detail Modal -->
+<div class="modal" id="observationDetailModal">
+  <div class="modal-content" style="max-width:780px; padding:0;">
+    <span class="close-btn" onclick="closeModal('observationDetailModal')"
+          style="top:14px; right:18px; color:#fff; z-index:5;">&times;</span>
+    <div id="odmBody"></div>
+  </div>
+</div>
 <!-- QR Code Modal -->
 <div class="modal" id="qrModal">
   <div class="modal-content" style="max-width:400px;">
@@ -2012,8 +2116,9 @@ const authType = (card.AuthType || card.authType || 'guest').toLowerCase();
 
     html += `<div class="stop-card-item">
       <div class="top-row">
-        <div class="obs-text">${escHtml(card.Observation || 'No description')}</div>
-        ${card.ImageUrl ? `<img src="${card.ImageUrl}" class="image-thumb" onclick="window.open('${card.ImageUrl}','_blank')" />` : ''}
+<div class="obs-text" style="cursor:pointer;" onclick="openObservationDetail('cloud', ${index})" title="Click to view details">
+  ${escHtml(card.Observation || 'No description')}
+</div>        ${card.ImageUrl ? `<img src="${card.ImageUrl}" class="image-thumb" onclick="window.open('${card.ImageUrl}','_blank')" />` : ''}
         ${isHSEQ ? `<span class="badge badge-auth-${authType}">${authType}</span>` : ''}
       </div>
       <div class="meta">
@@ -3066,8 +3171,14 @@ const riskRowHtml = ['Critical','High','Medium','Low'].map(lvl => {
 
   <div class="section-bar">Life Saving Rules &nbsp;|&nbsp; قواعد الحفاظ على الحياة</div>
   <div class="lsr-wrap">${lsrHtml}</div>
-   <div class="section-bar">Risk Level &nbsp;|&nbsp; مستوى الخطورة</div>
-<div style="padding:8px 14px; display:flex; gap:10px; flex-wrap:wrap;">${riskRowHtml}</div>
+  <div style="display:flex; align-items:center; gap:12px; padding:6px 12px; border-top:1px solid #1a2332; border-bottom:1px solid #1a2332; background:#f8faff;">
+  <div style="background:#1a2332; color:#fff; font-weight:bold; font-size:10px; padding:6px 14px; border-radius:4px; white-space:nowrap;">
+    ${t('riskLevel')} &nbsp;|&nbsp; مستوى الخطورة
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; padding:2px 0;">
+    ${riskRowHtml}
+  </div>
+</div>
   <table class="grid" style="border-top:1px solid #1a2332;">
     <tr>
       <td class="label-cell">Description<span class="ar">الوصف</span></td>
@@ -3968,6 +4079,282 @@ function riskLabel(level) {
   const key = map[String(level).toLowerCase()];
   return key ? t(key) : level;
 }
+
+// ================================================================
+// OBSERVATION DETAIL MODAL (read‑only, awesome view)
+// ================================================================
+function openObservationDetail(source, index) {
+  const cards = source === 'cloud' ? (window._cloudCards || [])
+               : source === 'my'    ? (window._myCards   || [])
+               : [];
+  const card = cards[index];
+  if (!card) return;
+
+  const body = document.getElementById('odmBody');
+  body.innerHTML = buildObservationDetailHTML(card, source, index);
+  document.getElementById('observationDetailModal').classList.add('active');
+}
+function buildObservationDetailHTML(card, source, index) {
+  const reporter     = card.Reporter || card.reporter || '—';
+  const reporterId   = card.ReporterId || card.reporterId || '';
+  const job          = card.Job || card.job || '';
+  const area         = card.Area || card.area || '';
+  const location     = card.Location || card.location || '';
+  const timestamp    = formatSimpleDateTime(card.Timestamp || card.timestamp) || '—';
+  const obsTypeRaw   = (card.ObservationType || card.obsType || '').toLowerCase();
+  const observation  = card.Observation || card.observation || '—';
+  const recommendation = card.Recommendation || card.recommendation || '';
+  const respDept     = card.ResponsibleDepartment || card.respDept || '';
+  const targetDate   = card.TargetDate || card.targetDate || '';
+  const status       = card.Status || card.status || 'Pending';
+  const approval     = card.Approval || 'pending';
+  const riskLevel    = card.RiskLevel || '';
+  const imageUrl     = card.ImageUrl || card.imageUrl || '';
+  const caImage      = card.CorrectiveActionImage || '';
+  const caDescription = card.CorrectiveActionDescription || '';
+  const caBy         = card.CorrectiveActionBy || '';
+  const caDate       = card.CorrectiveActionDate ? formatSimpleDateTime(card.CorrectiveActionDate) : '';
+
+  let checks = {};
+  try { checks = JSON.parse(card.SafetyChecks || '{}'); } catch(e) {}
+
+  const isA = obsTypeRaw === 'unsafe_act';
+  const isN = obsTypeRaw === 'near_miss';
+  const isC = obsTypeRaw === 'unsafe_condition';
+  const isS = obsTypeRaw === 'positive';
+
+  const logoUrl = companyConfig.logo || '';
+  const code    = companyConfig.code || 'F.S.OO.007';
+  const title   = companyConfig.pdfTitle || 'Hazard Observation Card';
+  const company = companyConfig.companyName || currentUser.companyName || '';
+
+  // Classification checkbox (visual)
+  const classBox = (letter, checked, en, ar, color) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;
+                background:${checked ? color : '#f5f7fa'};
+                border:2px solid ${checked ? color : '#e0e7ef'};
+                color:${checked ? '#fff' : '#5f6b7a'};
+                font-weight:${checked ? '700' : '500'};font-size:13px;
+                transition:all .25s;flex:1;min-width:0;">
+      <span style="display:inline-flex;width:20px;height:20px;border:2px solid ${checked ? '#fff' : '#c5cdd8'};
+                   border-radius:5px;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
+                   background:${checked ? 'rgba(255,255,255,.25)' : '#fff'};color:${checked ? '#fff' : 'transparent'};">✓</span>
+      <span style="flex:1;">
+        <b>${letter}</b> ${en}
+        <span style="display:block;font-size:10px;opacity:.85;direction:rtl;">${ar}</span>
+      </span>
+    </div>`;
+
+  // Category chip
+  const catChip = (item) => {
+    const key = 'generalHazards_' + item.en.replace(/\s/g, '_');
+    const unsafe = checks[key] === false;
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;
+                        background:${unsafe ? '#fce8e8' : '#f8faff'};
+                        border:1.5px solid ${unsafe ? '#d32f2f' : '#e0e7ef'};
+                        font-size:11px;line-height:1.2;">
+      <span style="display:inline-flex;width:14px;height:14px;border:1.5px solid ${unsafe ? '#d32f2f' : '#c5cdd8'};
+                   border-radius:4px;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;
+                   background:${unsafe ? '#d32f2f' : '#fff'};color:${unsafe ? '#fff' : 'transparent'};font-weight:bold;">✓</span>
+      <span style="flex:1;color:${unsafe ? '#b71c1c' : '#3d4a5a'};font-weight:${unsafe ? '700' : '500'};">${item.en}</span>
+      <span style="font-size:9px;color:${unsafe ? '#b71c1c' : '#8896a8'};direction:rtl;">${item.ar || ''}</span>
+    </div>`;
+  };
+
+  // LSR chip
+  const lsrChip = (item) => {
+    const key = 'lifeSavingRules_' + item.en.replace(/\s/g, '_');
+    const unsafe = checks[key] === false;
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;
+                        background:${unsafe ? '#fce8e8' : '#f8faff'};
+                        border:1.5px solid ${unsafe ? '#d32f2f' : '#e0e7ef'};
+                        font-size:11px;line-height:1.2;">
+      <span style="display:inline-flex;width:14px;height:14px;border:1.5px solid ${unsafe ? '#d32f2f' : '#c5cdd8'};
+                   border-radius:4px;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;
+                   background:${unsafe ? '#d32f2f' : '#fff'};color:${unsafe ? '#fff' : 'transparent'};font-weight:bold;">✓</span>
+      <span style="flex:1;color:${unsafe ? '#b71c1c' : '#3d4a5a'};font-weight:${unsafe ? '700' : '500'};">${item.en}</span>
+      <span style="font-size:9px;color:${unsafe ? '#b71c1c' : '#8896a8'};direction:rtl;">${item.ar || ''}</span>
+    </div>`;
+  };
+
+  // Risk level pill (screen version)
+  const riskColors = { Critical:'#7f0000', High:'#d32f2f', Medium:'#e37400', Low:'#0f9d58' };
+  const riskArabic = { Critical:'حرج', High:'عالي', Medium:'متوسط', Low:'منخفض' };
+  const riskPills = ['Critical','High','Medium','Low'].map(lvl => {
+    const checked = riskLevel.toLowerCase() === lvl.toLowerCase();
+    const c = riskColors[lvl];
+    return `<div style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:22px;
+                        border:2px solid ${checked ? c : '#e0e7ef'};
+                        background:${checked ? c : '#fff'};
+                        color:${checked ? '#fff' : '#8896a8'};
+                        font-weight:${checked ? '700' : '500'};font-size:12px;
+                        transition:all .25s;">
+      <span style="width:10px;height:10px;border-radius:50%;
+                   background:${checked ? '#fff' : '#e0e7ef'};
+                   border:2px solid ${checked ? '#fff' : '#c5cdd8'};"></span>
+      ${lvl}
+      <span style="font-size:11px;direction:rtl;opacity:.9;">${riskArabic[lvl]}</span>
+    </div>`;
+  }).join('');
+
+  const catHtml = safetyChecklists.hse.generalHazards.map(catChip).join('');
+  const lsrHtml = safetyChecklists.hse.lifeSavingRules.map(lsrChip).join('');
+
+  return `
+  <div style="border-radius:16px; overflow:hidden; background:#fff;">
+
+    <!-- HEADER BAR (mimics PDF outer table) -->
+    <div style="background:linear-gradient(135deg,#0d47a1,#1a73e8); color:#fff; padding:14px 20px;">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.5px;opacity:.9;">${escHtml(company || 'COMPANY NAME')}</div>
+          <div style="font-size:10px;opacity:.75;margin-top:2px;">
+            FORM: <b>${escHtml(code)}</b> &nbsp;|&nbsp; REV: <b>01</b> &nbsp;|&nbsp; PAGE: <b>1 OF 1</b>
+          </div>
+        </div>
+        ${logoUrl ? `<img src="${logoUrl}" style="max-height:48px;max-width:150px;object-fit:contain;background:#fff;padding:4px 8px;border-radius:8px;">` : ''}
+      </div>
+      <div style="text-align:center;font-size:20px;font-weight:800;letter-spacing:.5px;margin-top:10px;">${escHtml(title)}</div>
+    </div>
+
+    <div style="padding:20px; max-height:calc(90vh - 180px); overflow-y:auto; background:#f8faff;">
+
+      <!-- LOCATION / DATE -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="odm-card">
+          <div class="odm-card-label"><i class="fas fa-map-marker-alt"></i> Location / الموقع</div>
+          <div class="odm-card-value">${escHtml(location || area || '—')}${location && area && location !== area ? ' — ' + escHtml(area) : ''}</div>
+        </div>
+        <div class="odm-card">
+          <div class="odm-card-label"><i class="fas fa-calendar-alt"></i> Date / التاريخ</div>
+          <div class="odm-card-value">${timestamp}</div>
+        </div>
+      </div>
+
+      <!-- NAME / CLASSIFICATION -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="odm-card">
+          <div class="odm-card-label"><i class="fas fa-user"></i> Name / الاسم</div>
+          <div class="odm-card-value">
+            <b>${escHtml(reporter)}</b>
+            ${reporterId ? `<span style="color:#1a73e8;font-weight:600;"> (ID: ${escHtml(reporterId)})</span>` : ''}
+          </div>
+          ${job ? `<div style="font-size:12px;color:#5f6b7a;margin-top:4px;">${escHtml(job)}</div>` : ''}
+        </div>
+        <div class="odm-card">
+          <div class="odm-card-label"><i class="fas fa-tags"></i> Classification / التصنيف</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+            ${classBox('A', isA, 'Unsafe Act',       'تصرف غير آمن', '#e37400')}
+            ${classBox('C', isC, 'Unsafe Condition', 'شرط غير آمن', '#1a73e8')}
+            ${classBox('N', isN, 'Near Miss',        'حادث وشيك',    '#7c3aed')}
+            ${classBox('S', isS, 'Positive',         'ملاحظة إيجابية','#0f9d58')}
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORY -->
+      <div class="odm-block">
+        <div class="odm-block-title"><i class="fas fa-list-check"></i> Choose Relevant Category &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">اختر الفئة المناسبة</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px;">${catHtml}</div>
+      </div>
+
+      <!-- LIFE SAVING RULES -->
+      <div class="odm-block">
+        <div class="odm-block-title"><i class="fas fa-shield-halved"></i> Life Saving Rules &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">قواعد الحفاظ على الحياة</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:12px;">${lsrHtml}</div>
+      </div>
+
+      <!-- RISK LEVEL -->
+      <div class="odm-block">
+        <div class="odm-block-title"><i class="fas fa-triangle-exclamation"></i> Risk Level &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">مستوى الخطورة</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;padding:12px;">${riskPills}</div>
+      </div>
+
+      <!-- DESCRIPTION + PHOTO -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="odm-block" style="margin-bottom:0;">
+          <div class="odm-block-title"><i class="fas fa-eye"></i> Description &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">الوصف</span></div>
+          <div style="padding:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#1a2332;">${escHtml(observation)}</div>
+        </div>
+        <div class="odm-block" style="margin-bottom:0;">
+          <div class="odm-block-title"><i class="fas fa-image"></i> Photo &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">الصورة</span></div>
+          <div style="padding:12px;text-align:center;min-height:140px;display:flex;align-items:center;justify-content:center;">
+            ${imageUrl ? `<img src="${imageUrl}" onclick="window.open('${imageUrl}','_blank')"
+              style="max-width:100%;max-height:220px;border-radius:10px;cursor:zoom-in;box-shadow:0 2px 8px rgba(0,0,0,.08);" />`
+              : '<span style="color:#8896a8;font-size:12px;font-style:italic;">No photo</span>'}
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION TAKEN / RECOMMENDATION -->
+      <div class="odm-block">
+        <div class="odm-block-title"><i class="fas fa-lightbulb" style="color:#e37400;"></i> Action Taken / Recommendation &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">الإجراء المتخذ / التوصية</span></div>
+        <div style="padding:14px;font-size:13px;line-height:1.6;">
+          ${recommendation ? escHtml(recommendation) : '<span style="color:#8896a8;font-style:italic;">—</span>'}
+          ${respDept ? `<div style="margin-top:8px;font-size:12px;color:#5f6b7a;"><b>Responsible:</b> ${escHtml(respDept)}</div>` : ''}
+          ${targetDate ? `<div style="margin-top:2px;font-size:12px;color:#5f6b7a;"><b>Target:</b> ${escHtml(targetDate)}</div>` : ''}
+        </div>
+      </div>
+
+      <!-- CORRECTIVE ACTION + PHOTO -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="odm-block" style="margin-bottom:0;border-color:#b7e1cd;">
+          <div class="odm-block-title" style="color:#0f9d58;"><i class="fas fa-wrench"></i> Corrective Action &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">الإجراءات التصحيحية</span></div>
+          <div style="padding:14px;font-size:13px;line-height:1.6;">
+            ${caDescription ? escHtml(caDescription) : '<span style="color:#8896a8;font-style:italic;">—</span>'}
+            ${caBy ? `<div style="margin-top:8px;font-size:12px;color:#5f6b7a;"><b>By:</b> ${escHtml(caBy)}</div>` : ''}
+            ${caDate ? `<div style="margin-top:2px;font-size:12px;color:#5f6b7a;"><b>Date:</b> ${caDate}</div>` : ''}
+          </div>
+        </div>
+        <div class="odm-block" style="margin-bottom:0;border-color:#b7e1cd;">
+          <div class="odm-block-title" style="color:#0f9d58;"><i class="fas fa-image"></i> CA Photo &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">صورة</span></div>
+          <div style="padding:12px;text-align:center;min-height:140px;display:flex;align-items:center;justify-content:center;">
+            ${caImage ? `<img src="${caImage}" onclick="window.open('${caImage}','_blank')"
+              style="max-width:100%;max-height:220px;border-radius:10px;cursor:zoom-in;box-shadow:0 2px 8px rgba(0,0,0,.08);" />`
+              : '<span style="color:#8896a8;font-size:12px;font-style:italic;">No photo</span>'}
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGNATURE -->
+      <div class="odm-block">
+        <div class="odm-block-title"><i class="fas fa-signature"></i> Signature &nbsp;<span style="opacity:.7;font-weight:400;font-size:11px;">التوقيع</span></div>
+        <div style="padding:14px;font-size:14px;font-weight:700;">
+          ${escHtml(reporter)}${reporterId ? ` <span style="font-weight:500;color:#666;font-size:12px;">(ID: ${escHtml(reporterId)})</span>` : ''}
+        </div>
+      </div>
+
+      <!-- BADGES STRIP -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px;padding-top:16px;border-top:2px dashed #e0e7ef;">
+        <span style="background:#fef3e0;color:#e37400;padding:6px 16px;border-radius:16px;font-size:12px;font-weight:600;">
+          <i class="fas fa-flag"></i> ${escHtml(status)}
+        </span>
+        <span style="background:${{approved:'#e6f4ea',unapproved:'#fce8e8',pending:'#fef3e0'}[String(approval).toLowerCase()] || '#eef2f7'};
+                     color:${{approved:'#0f9d58',unapproved:'#d32f2f',pending:'#e37400'}[String(approval).toLowerCase()] || '#3d4a5a'};
+                     padding:6px 16px;border-radius:16px;font-size:12px;font-weight:600;">
+          <i class="fas fa-circle-check"></i> ${approval.charAt(0).toUpperCase()+approval.slice(1)}
+        </span>
+        <span style="background:#e8f0fe;color:#1a73e8;padding:6px 16px;border-radius:16px;font-size:12px;font-weight:600;">
+          <i class="fas fa-hashtag"></i> ${escHtml(card.ObservationID || card.Id || '—')}
+        </span>
+      </div>
+
+      <!-- ACTIONS -->
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap;">
+        <button class="btn btn-sm btn-outline" onclick="closeModal('observationDetailModal')">
+          <i class="fas fa-times"></i> Close
+        </button>
+        ${source && typeof index === 'number' ? `
+          <button class="btn btn-sm btn-success" onclick="closeModal('observationDetailModal'); generatePDF('${source}', ${index})">
+            <i class="fas fa-file-pdf"></i> Original PDF
+          </button>
+          <button class="btn btn-sm btn-primary" onclick="closeModal('observationDetailModal'); generatePDFNew('${source}', ${index})">
+            <i class="fas fa-file-pdf"></i> Form PDF
+          </button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
 // ================================================================
 // INIT
 // ================================================================
@@ -4043,6 +4430,8 @@ window.toggleApprovalMy = toggleApprovalMy;
 window.toggleApprovalCloud = toggleApprovalCloud;
 window.closeModal = closeModal;
 window.t = t;
+window.openObservationDetail = openObservationDetail;
+
 </script>
 </body>
 </html>
