@@ -2029,62 +2029,101 @@ function renderMyCards(container, cards) {
   const isHSEQ = currentUser.role === 'hseq' && currentUser.id !== '';
   const userDept = currentUser.department || '';
 
+  if (!cards || cards.length === 0) {
+    container.innerHTML = `<div class="text-center text-muted" style="padding:30px 0;">
+      <i class="fas fa-inbox" style="font-size:40px;display:block;margin-bottom:12px;"></i>${t('noCards')}
+    </div>`;
+    window._myCards = [];
+    return;
+  }
+
   let html = '';
   cards.forEach((card, index) => {
     const isLocal = card._local || false;
-    const date = card.timestamp || card.Timestamp ? new Date(card.timestamp || card.Timestamp).toLocaleDateString() : 'N/A';
-    const statusBadge = getStatusBadge(card.status || card.Status);
-    const typeBadge = getTypeBadge(card.obsType || card.ObservationType);
-    const respDept = card.respDept || card.ResponsibleDepartment || '';
-    const hasCA = card.CorrectiveActionImage || card.CorrectiveActionDescription;
-    const approval = card.Approval || 'pending';
+
+    // Date (uses universal parser)
+    const date = formatSimpleDateTime(card.Timestamp || card.timestamp) || 'N/A';
+
+    // Badges
+    const statusBadge  = getStatusBadge(card.Status || card.status);
+    const typeBadge    = getTypeBadge(card.ObservationType || card.obsType);
+    const respDept     = card.ResponsibleDepartment || card.respDept || '';
+    const approval     = card.Approval || 'pending';
     const approvalBadge = `<span class="badge badge-approval-${approval}">${approval}</span>`;
-    
+    const hasCA        = card.CorrectiveActionImage || card.CorrectiveActionDescription;
+    const riskBadge    = getRiskBadge(card.RiskLevel);
+
+    // Image
     let imageSrc = '';
-    if (card.imageUrl) {
-      imageSrc = card.imageUrl;
-    } else if (card.imageBase64) {
-      imageSrc = `data:image/jpeg;base64,${card.imageBase64}`;
-    }
-    const obsText = card.observation || card.Observation || 'No description';
-// FIXED
-const authType = card.AuthType ||
-  ((card.ReporterId || card.reporterId || '').trim() &&
-   currentUser.id &&
-   (card.ReporterId || card.reporterId || '').trim() === currentUser.id ? 'worker' : 'guest');
+    if (card.imageUrl) imageSrc = card.imageUrl;
+    else if (card.ImageUrl) imageSrc = card.ImageUrl;
+    else if (card.imageBase64) imageSrc = `data:image/jpeg;base64,${card.imageBase64}`;
+
+    const obsText = card.Observation || card.observation || 'No description';
+
+    // Auth type: use backend value if available, else fall back to a viewer-independent check
+    const authType = (card.AuthType || card.authType || 'guest').toLowerCase();
+
+    // Permissions
+    const canAddCA = isHSEQ || (userDept && respDept && userDept === respDept);
+
     html += `<div class="stop-card-item">
       <div class="top-row">
-        <div class="obs-text">${escHtml(obsText)}</div>
+        <div class="obs-text" style="cursor:pointer;"
+             onclick="openObservationDetail('my', ${index})"
+             title="Click to view details">
+          ${escHtml(obsText)}
+        </div>
         ${imageSrc ? `<img src="${imageSrc}" class="image-thumb" onclick="window.open('${imageSrc}','_blank')" />` : ''}
         ${isLocal ? `<span class="badge badge-warning">${t('local')}</span>` : ''}
-        ${isHSEQ ? `<span class="badge badge-auth-${authType}">${authType}</span>` : ''}
+        ${isHSEQ && !isLocal ? `<span class="badge badge-auth-${authType}">${authType}</span>` : ''}
       </div>
+
       <div class="meta">
-        <span><i class="fas fa-user"></i> ${escHtml(card.reporter || card.Reporter || 'Unknown')}</span>
-        <span><i class="fas fa-map-marker-alt"></i> ${escHtml(card.area || card.Area || '')} ${card.location || card.Location ? ' - ' + escHtml(card.location || card.Location) : ''}</span>
+        <span><i class="fas fa-user"></i> ${escHtml(card.Reporter || card.reporter || 'Unknown')}</span>
+        <span><i class="fas fa-map-marker-alt"></i> ${escHtml(card.Area || card.area || '')}${(card.Location || card.location) ? ' - ' + escHtml(card.Location || card.location) : ''}</span>
         <span><i class="fas fa-calendar"></i> ${date}</span>
         <span>${typeBadge}</span>
         <span>${statusBadge}</span>
-        ${card.department || card.Department ? `<span><i class="fas fa-building"></i> ${escHtml(card.department || card.Department)}</span>` : ''}
+        ${(card.Department || card.department) ? `<span><i class="fas fa-building"></i> ${escHtml(card.Department || card.department)}</span>` : ''}
         ${respDept ? `<span><i class="fas fa-users"></i> ${escHtml(respDept)}</span>` : ''}
         ${!isLocal ? approvalBadge : ''}
+        ${riskBadge}
         ${hasCA ? `<span class="badge badge-warning"><i class="fas fa-check"></i> ${t('correctiveActionAdded')}</span>` : ''}
       </div>
+
       <div class="actions">
+        <button class="btn btn-sm btn-outline" onclick="openObservationDetail('my', ${index})">
+          <i class="fas fa-eye"></i> View
+        </button>
         ${imageSrc ? `<a href="${imageSrc}" target="_blank" class="btn btn-sm btn-outline"><i class="fas fa-image"></i> ${t('viewImage')}</a>` : ''}
-        <button class="btn btn-sm btn-success" onclick="generatePDF('my', ${index})"><i class="fas fa-file-pdf"></i> ${t('downloadPDF')}</button>
+        <button class="btn btn-sm btn-success" onclick="generatePDF('my', ${index})">
+          <i class="fas fa-file-pdf"></i> ${t('downloadPDF')}
+        </button>
+        ${!isLocal ? `<button class="btn btn-sm btn-primary" onclick="generatePDFNew('my', ${index})" title="Print in F.S.OO.007 form layout">
+          <i class="fas fa-file-pdf"></i> Form PDF
+        </button>` : ''}
+
         ${isLocal ? `
-          <button class="btn btn-sm btn-primary" onclick="openLocalEditModal(${index})"><i class="fas fa-edit"></i> ${t('edit')}</button>
-          <button class="btn btn-sm btn-success" onclick="uploadSingleCard(${index})"><i class="fas fa-cloud-upload-alt"></i> ${t('syncPending')}</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteLocalCard(${card._localIndex})"><i class="fas fa-trash-alt"></i> Delete</button>
+          <button class="btn btn-sm btn-primary" onclick="openLocalEditModal(${index})">
+            <i class="fas fa-edit"></i> ${t('edit')}
+          </button>
+          <button class="btn btn-sm btn-success" onclick="uploadSingleCard(${card._localIndex})">
+            <i class="fas fa-cloud-upload-alt"></i> ${t('syncPending')}
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteLocalCard(${card._localIndex})">
+            <i class="fas fa-trash-alt"></i> Delete
+          </button>
         ` : `
           ${isHSEQ ? `<button class="btn btn-sm btn-primary" onclick="openFullEditModalMy(${index})"><i class="fas fa-edit"></i> ${t('edit')}</button>` : ''}
           ${isHSEQ ? `<button class="btn btn-sm ${approval === 'approved' ? 'btn-danger' : 'btn-success'}" onclick="toggleApprovalMy(${index})"><i class="fas fa-check-double"></i> ${approval === 'approved' ? t('unapprove') : t('approve')}</button>` : ''}
-          ${((isHSEQ) || (userDept && respDept && userDept === respDept)) && card._sheetRowIndex > 0 ? `<button class="btn btn-sm btn-warning" onclick="openCAModalMy(${index})"><i class="fas fa-plus"></i> ${t('addCorrectiveAction')}</button>` : ''}
+          ${isHSEQ ? `<button class="btn btn-sm btn-danger" onclick="deleteCloudCard(${index})"><i class="fas fa-trash-alt"></i> Delete</button>` : ''}
+          ${canAddCA && card._sheetRowIndex > 0 ? `<button class="btn btn-sm btn-warning" onclick="openCAModalMy(${index})"><i class="fas fa-plus"></i> ${t('addCorrectiveAction')}</button>` : ''}
         `}
       </div>
     </div>`;
   });
+
   container.innerHTML = html;
   window._myCards = cards;
   window._myCardsType = 'my';
@@ -2557,17 +2596,15 @@ function saveLocalEdit() {
 // ================================================================
 // UPLOAD SINGLE LOCAL CARD
 // ================================================================
-async function uploadSingleCard(index) {
-  const cards = window._myCards || [];
-  const card = cards[index];
-  if (!card || !card._local) return;
+async function uploadSingleCard(localIndex) {
+  const card = pendingCards[localIndex];
+  if (!card) { showToast('Card not found', 'error'); return; }
   if (!currentUser.loggedIn || !companyConfig.observationsSheetId) {
     showToast('Please login first', 'error');
     return;
   }
-  const data = { ...card };
-  delete data._local;
-  delete data._localIndex;
+
+  let data = { ...card };
   let imageUrl = data.imageUrl || '';
   if (data.imageBase64 && !imageUrl) {
     const uploadResult = await apiCall('uploadImage', {
@@ -2578,34 +2615,39 @@ async function uploadSingleCard(index) {
     });
     if (uploadResult.success) {
       imageUrl = uploadResult.url;
-    } else {
+    } else if (!uploadResult.isConnectionError) {
       showToast('Image upload failed: ' + uploadResult.error, 'error');
+      return;
+    } else {
+      showToast('Cannot reach server. Try again later.', 'error');
       return;
     }
     delete data.imageBase64;
   }
   data.imageUrl = imageUrl;
+
   const result = await apiCall('saveCard', {
     data: data,
     imageUrl: imageUrl,
     observationsSheetId: companyConfig.observationsSheetId,
     safetyChecks: data.safetyChecks || '{}',
-      loggedInUserId: currentUser.id || '' // ADD THIS
-
+    loggedInUserId: currentUser.id || ''
   });
+
   if (result.success) {
     showToast('Card uploaded successfully', 'success');
-    pendingCards.splice(card._localIndex, 1);
+    pendingCards.splice(localIndex, 1);
     localStorage.setItem('pendingCards', JSON.stringify(pendingCards));
     updatePendingUI();
     loadMyCards();
     loadCharts();
     if ($('panel-cloud').classList.contains('active')) loadCloudCards();
+  } else if (result.isConnectionError) {
+    showToast('Connection problem. Card kept locally.', 'error');
   } else {
     showToast('Upload failed: ' + (result.error || ''), 'error');
   }
 }
-
 // ================================================================
 // APPROVAL TOGGLE
 // ================================================================
@@ -3091,7 +3133,7 @@ const riskRowHtml = ['Critical','High','Medium','Low'].map(lvl => {
   const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>${title}</title>
 <style>
-  @page { margin: 0.4in; size: A4 portrait; }
+  @page { margin: 0.2in; size: A4 portrait; }
   * { box-sizing: border-box; }
   body { font-family:'Segoe UI', Arial, sans-serif; font-size:10px; color:#1a2332; margin:0; padding:0; background:#fff; }
   .outer { width:100%; border-collapse:collapse; border:1.5px solid #1a2332; margin-bottom:10px; }
